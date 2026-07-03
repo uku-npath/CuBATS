@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>cubats.slide_collection.registration &mdash; CuBATS 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
 
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
@@ -135,18 +135,14 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">microregistration</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;microregistration must be a boolean&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">max_non_rigid_registration_dim_px</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;max_non_rigid_registartion_dim_px must be an integer&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;max_non_rigid_registration_dim_px must be an integer&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">crop</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;crop must be a string&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">crop</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">CROP_OVERLAP</span><span class="p">,</span> <span class="n">CROP_REFERENCE</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;crop must be one of </span><span class="si">{</span><span class="n">CROP_OVERLAP</span><span class="si">}</span><span class="s2"> or </span><span class="si">{</span><span class="n">CROP_REFERENCE</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;crop must be one of </span><span class="si">{</span><span class="n">CROP_OVERLAP</span><span class="si">}</span><span class="s2"> or </span><span class="si">{</span><span class="n">CROP_REFERENCE</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">registered_slides_dst</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">registered_slides_dst</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-            <span class="n">results_dst_dir</span><span class="p">,</span> <span class="s2">&quot;registered_slides&quot;</span><span class="p">)</span>
+        <span class="n">registered_slides_dst</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">results_dst_dir</span><span class="p">,</span> <span class="s2">&quot;registered_slides&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">crop</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">crop</span> <span class="o">=</span> <span class="n">CROP_OVERLAP</span>
@@ -157,10 +153,10 @@
     <span class="c1"># Micro registration</span>
     <span class="k">if</span> <span class="n">microregistration</span><span class="p">:</span>
         <span class="n">registrar</span><span class="o">.</span><span class="n">register_micro</span><span class="p">(</span>
-            <span class="n">max_non_rigid_registartion_dim_px</span><span class="o">=</span><span class="n">max_non_rigid_registration_dim_px</span>
+            <span class="n">max_non_rigid_registration_dim_px</span><span class="o">=</span><span class="n">max_non_rigid_registration_dim_px</span>
         <span class="p">)</span>
     <span class="c1"># Save registered slides</span>
-    <span class="n">registrar</span><span class="o">.</span><span class="n">warp_and_save_slides</span><span class="p">(</span><span class="n">registered_slides_dst</span><span class="p">,</span> <span class="n">crop</span><span class="o">=</span><span class="n">crop</span><span class="p">)</span>
+    <span class="n">registrar</span><span class="o">.</span><span class="n">warp_and_save_slides</span><span class="p">(</span><span class="n">registered_slides_dst</span><span class="p">,</span> <span class="n">crop</span><span class="o">=</span><span class="n">crop</span><span class="p">,</span> <span class="n">tile_wh</span><span class="o">=</span><span class="mi">1024</span><span class="p">)</span>
     <span class="n">registration</span><span class="o">.</span><span class="n">kill_jvm</span><span class="p">()</span></div>
 
 
@@ -174,7 +170,7 @@
     <span class="n">registered_slides_dst</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">microregistration</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">max_non_rigid_registration_dim_px</span><span class="o">=</span><span class="n">DEFAULT_MAX_NON_RIGID_REG_SIZE</span><span class="p">,</span>
-    <span class="n">crop</span><span class="o">=</span><span class="kc">None</span>
+    <span class="n">crop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Register the slides with a reference slide using Valis. This function automatically registers the slides and saves</span>
@@ -209,18 +205,19 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">microregistration</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;microregistration must be a boolean&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">max_non_rigid_registration_dim_px</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;max_non_rigid_registartion_dim_px must be an integer&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;max_non_rigid_registration_dim_px must be an integer&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">registered_slides_dst</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">registered_slides_dst</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-            <span class="n">results_dst_dir</span><span class="p">,</span> <span class="s2">&quot;registered_slides&quot;</span><span class="p">)</span>
+        <span class="n">registered_slides_dst</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">results_dst_dir</span><span class="p">,</span> <span class="s2">&quot;registered_slides&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">crop</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">crop</span> <span class="o">=</span> <span class="n">CROP_REFERENCE</span>
 
     <span class="n">registrar</span> <span class="o">=</span> <span class="n">registration</span><span class="o">.</span><span class="n">Valis</span><span class="p">(</span>
-        <span class="n">slide_src_dir</span><span class="p">,</span> <span class="n">results_dst_dir</span><span class="p">,</span> <span class="n">reference_img_f</span><span class="o">=</span><span class="n">referenceSlide</span>
+        <span class="n">slide_src_dir</span><span class="p">,</span>
+        <span class="n">results_dst_dir</span><span class="p">,</span>
+        <span class="n">reference_img_f</span><span class="o">=</span><span class="n">referenceSlide</span><span class="p">,</span>
+        <span class="n">align_to_reference</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">rigid_registrar</span><span class="p">,</span> <span class="n">non_rigid_registrar</span><span class="p">,</span> <span class="n">error_df</span> <span class="o">=</span> <span class="n">registrar</span><span class="o">.</span><span class="n">register</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">microregistration</span><span class="p">:</span>
@@ -228,7 +225,7 @@
             <span class="n">max_non_rigid_registration_dim_px</span><span class="o">=</span><span class="n">max_non_rigid_registration_dim_px</span><span class="p">,</span>
             <span class="n">align_to_reference</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
-    <span class="n">registrar</span><span class="o">.</span><span class="n">warp_and_save_slides</span><span class="p">(</span><span class="n">registered_slides_dst</span><span class="p">,</span> <span class="n">crop</span><span class="o">=</span><span class="n">crop</span><span class="p">)</span>
+    <span class="n">registrar</span><span class="o">.</span><span class="n">warp_and_save_slides</span><span class="p">(</span><span class="n">registered_slides_dst</span><span class="p">,</span> <span class="n">crop</span><span class="o">=</span><span class="n">crop</span><span class="p">,</span> <span class="n">tile_wh</span><span class="o">=</span><span class="mi">1024</span><span class="p">)</span>
     <span class="n">registration</span><span class="o">.</span><span class="n">kill_jvm</span><span class="p">()</span></div>
 
 
@@ -236,10 +233,10 @@
 <div class="viewcode-block" id="register_slides_high_resolution">
 <a class="viewcode-back" href="../../../registration.html#cubats.slide_collection.registration.register_slides_high_resolution">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">register_slides_high_resolution</span><span class="p">(</span>
-        <span class="n">slide_src_dir</span><span class="p">,</span>
-        <span class="n">results_dst_dir</span><span class="p">,</span>
-        <span class="n">registered_slides_dst</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">micro_reg_fraction</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">slide_src_dir</span><span class="p">,</span>
+    <span class="n">results_dst_dir</span><span class="p">,</span>
+    <span class="n">registered_slides_dst</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">micro_reg_fraction</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Performs high resolution alignment.</span>
@@ -247,8 +244,7 @@
     <span class="c1"># Perform high resolution rigid registration using the MicroRigidRegistrar</span>
     <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">registered_slides_dst</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">registered_slides_dst</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-            <span class="n">results_dst_dir</span><span class="p">,</span> <span class="s2">&quot;registered_slides&quot;</span><span class="p">)</span>
+        <span class="n">registered_slides_dst</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">results_dst_dir</span><span class="p">,</span> <span class="s2">&quot;registered_slides&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">micro_reg_fraction</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">micro_reg_fraction</span> <span class="o">=</span> <span class="mf">0.25</span>
 
@@ -274,7 +270,8 @@
         <span class="n">max_non_rigid_registration_dim_px</span><span class="o">=</span><span class="n">micro_reg_size</span>
     <span class="p">)</span>
     <span class="n">registrar</span><span class="o">.</span><span class="n">warp_and_save_slides</span><span class="p">(</span>
-        <span class="n">registered_slides_dst</span><span class="p">,</span> <span class="n">crop</span><span class="o">=</span><span class="n">CROP_OVERLAP</span><span class="p">)</span>
+        <span class="n">registered_slides_dst</span><span class="p">,</span> <span class="n">crop</span><span class="o">=</span><span class="n">CROP_OVERLAP</span><span class="p">,</span> <span class="n">tile_wh</span><span class="o">=</span><span class="mi">1024</span>
+    <span class="p">)</span>
     <span class="n">registration</span><span class="o">.</span><span class="n">kill_jvm</span><span class="p">()</span>
     <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;High-resolution alignement completed in </span><span class="si">{</span><span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span></div>

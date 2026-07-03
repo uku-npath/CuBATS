@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>cubats.slide_collection.slide_collection &mdash; CuBATS 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
 
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
@@ -108,7 +108,7 @@
 <span class="c1"># Constants</span>
 <span class="c1"># Destination directories</span>
 <span class="n">RESULT_DATA_DIR</span> <span class="o">=</span> <span class="s2">&quot;data&quot;</span>
-<span class="n">REGISTRATION_DIR</span> <span class="o">=</span> <span class="s2">&quot;registration&quot;</span>
+<span class="n">REGISTRATION_DIR</span> <span class="o">=</span> <span class="s2">&quot;registration&quot;</span>  <span class="c1"># registered_slides</span>
 <span class="n">TILES_DIR</span> <span class="o">=</span> <span class="s2">&quot;tiles&quot;</span>
 <span class="n">COLOCALIZATION</span> <span class="o">=</span> <span class="s2">&quot;colocalization&quot;</span>
 <span class="n">ORIGINAL_TILES_DIR</span> <span class="o">=</span> <span class="s2">&quot;original&quot;</span>
@@ -412,7 +412,6 @@
 
 <span class="sd">            path_antigen_profiles (str, optional): Path to antigen profiles. Definitions as .json or .csv are accepted.</span>
 <span class="sd">                If no default thresholds will be applied during processing.</span>
-
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Logging</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">dictConfig</span><span class="p">(</span><span class="n">log_config</span><span class="o">.</span><span class="n">LOGGING</span><span class="p">)</span>
@@ -445,8 +444,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">slides</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="c1"># Slide informations</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">collection_info</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
-            <span class="n">columns</span><span class="o">=</span><span class="n">SLIDE_COLLECTION_COLUMN_NAMES</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">collection_info</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">SLIDE_COLLECTION_COLUMN_NAMES</span><span class="p">)</span>
 
         <span class="c1"># Mask Variables</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="kc">None</span>
@@ -485,8 +483,6 @@
 
         <span class="c1"># Load previous results if exist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">load_previous_results</span><span class="p">()</span>
-        <span class="c1"># if not self.mask_coordinates:</span>
-        <span class="c1">#    self.extract_mask_tile_coordinates()</span>
 
         <span class="k">if</span> <span class="n">path_antigen_profiles</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">add_antigen_profiles</span><span class="p">(</span><span class="n">path_antigen_profiles</span><span class="p">)</span>
@@ -519,11 +515,8 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            None</span>
-
-<span class="sd">            TODO: Check indexing of collection_info_df</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Initializing SlideCollection: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Initializing SlideCollection: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">init_start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">src_dir</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">src_dir</span><span class="p">,</span> <span class="n">file</span><span class="p">)):</span>
@@ -533,9 +526,9 @@
                     <span class="n">mask</span> <span class="o">=</span> <span class="kc">False</span>
                     <span class="n">ref</span> <span class="o">=</span> <span class="kc">False</span>
                     <span class="c1"># Look for mask and reference slide. If no reference selected HE slide will be selected</span>
-                    <span class="c1"># if re.search(&quot;_mask&quot;, filename):</span>
-                    <span class="c1">#    mask = True</span>
-                    <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;HE&quot;</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span> <span class="ow">or</span> <span class="n">filename</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference_slide</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;_mask&quot;</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+                        <span class="n">mask</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">elif</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;HE&quot;</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span> <span class="ow">or</span> <span class="n">filename</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference_slide</span><span class="p">:</span>
                         <span class="n">ref</span> <span class="o">=</span> <span class="kc">True</span>
 
                     <span class="n">slide</span> <span class="o">=</span> <span class="n">Slide</span><span class="p">(</span>
@@ -550,8 +543,8 @@
                     <span class="p">)</span>
                     <span class="k">if</span> <span class="n">ref</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference_slide</span><span class="p">:</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">reference_slide</span> <span class="o">=</span> <span class="n">slide</span>
-                    <span class="c1"># elif mask:</span>
-                    <span class="c1">#    self.mask = slide</span>
+                    <span class="k">elif</span> <span class="n">mask</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="n">slide</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">collection_info</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
             <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="p">,</span> <span class="s2">&quot;collection_info.csv&quot;</span><span class="p">),</span>
@@ -586,7 +579,6 @@
 <span class="sd">        Args:</span>
 <span class="sd">            path (str, optional): Path to directory containing pickle files. Defaults to `pickle_dir` of the slide</span>
 <span class="sd">                collection.</span>
-
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">prev_res_start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Searching for previous results&quot;</span><span class="p">)</span>
@@ -615,8 +607,7 @@
             <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pickle_dir</span>
             <span class="n">path_mask_coord</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;mask_coordinates.pickle&quot;</span><span class="p">)</span>
-            <span class="n">path_quant_res</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                <span class="n">path</span><span class="p">,</span> <span class="s2">&quot;quantification_results.pickle&quot;</span><span class="p">)</span>
+            <span class="n">path_quant_res</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;quantification_results.pickle&quot;</span><span class="p">)</span>
             <span class="n">path_dual_overlap_res</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
                 <span class="n">path</span><span class="p">,</span> <span class="s2">&quot;dual_antigen_expressions.pickle&quot;</span>
             <span class="p">)</span>
@@ -626,8 +617,7 @@
 
             <span class="c1"># load mask coordinates</span>
             <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path_mask_coord</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">mask_coordinates</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
-                    <span class="nb">open</span><span class="p">(</span><span class="n">path_mask_coord</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">mask_coordinates</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">path_mask_coord</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">))</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">[</span><span class="s2">&quot;segmented&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;Successfully loaded mask coordinates for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -639,8 +629,7 @@
 
             <span class="c1"># load quantification results</span>
             <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path_quant_res</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">quantification_results</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
-                    <span class="nb">open</span><span class="p">(</span><span class="n">path_quant_res</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">quantification_results</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">path_quant_res</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">))</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">[</span><span class="s2">&quot;quantified&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;Sucessfully loaded quantification results for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -651,8 +640,7 @@
                 <span class="p">)</span>
 
             <span class="c1"># load dual overlap results</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="s2">&quot;Searching for previous dual antigen expression results&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Searching for previous dual antigen expression results&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path_dual_overlap_res</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">dual_antigen_expressions</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
                     <span class="nb">open</span><span class="p">(</span><span class="n">path_dual_overlap_res</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span>
@@ -685,8 +673,7 @@
 
             <span class="c1"># Load processing info for each slide</span>
             <span class="k">for</span> <span class="n">slide</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">slides</span><span class="p">:</span>
-                <span class="n">path_slide</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                    <span class="n">path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">slide</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_processing_info.pickle&quot;</span><span class="p">)</span>
+                <span class="n">path_slide</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">slide</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_processing_info.pickle&quot;</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path_slide</span><span class="p">):</span>
                     <span class="n">slide</span><span class="o">.</span><span class="n">detailed_quantification_results</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
                         <span class="nb">open</span><span class="p">(</span><span class="n">path_slide</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span>
@@ -725,7 +712,6 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            dir (str): Path to directory the mask is in.</span>
-
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">dir</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="nb">dir</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
@@ -751,8 +737,7 @@
                         <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="n">existing</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                     <span class="k">else</span><span class="p">:</span>
                         <span class="k">try</span><span class="p">:</span>
-                            <span class="n">new_mask</span> <span class="o">=</span> <span class="n">Slide</span><span class="p">(</span>
-                                <span class="n">mask_name</span><span class="p">,</span> <span class="n">mask_path</span><span class="p">,</span> <span class="n">is_mask</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                            <span class="n">new_mask</span> <span class="o">=</span> <span class="n">Slide</span><span class="p">(</span><span class="n">mask_name</span><span class="p">,</span> <span class="n">mask_path</span><span class="p">,</span> <span class="n">is_mask</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                             <span class="bp">self</span><span class="o">.</span><span class="n">slides</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_mask</span><span class="p">)</span>
                             <span class="k">try</span><span class="p">:</span>
                                 <span class="bp">self</span><span class="o">.</span><span class="n">collection_info</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">collection_info</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span>
@@ -767,8 +752,8 @@
                             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                                 <span class="sa">f</span><span class="s2">&quot;Found mask Slide but failed to load it: </span><span class="si">{</span><span class="n">mask_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
                             <span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;Loaded mask slide from directory: </span><span class="si">{</span><span class="n">mask_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded mask slide from directory: </span><span class="si">{</span><span class="n">mask_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">[</span><span class="s2">&quot;segmented&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error while scanning </span><span class="si">{</span><span class="nb">dir</span><span class="si">}</span><span class="s2"> for mask: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
@@ -785,7 +770,6 @@
 <span class="sd">        Args:</span>
 <span class="sd">            save_img (bool): Boolean to determine if mask tiles shall be saved as image. Necessary if mask shall be</span>
 <span class="sd">                reconstructed later on. Note: Storing tiles will require addition storage. Defaults to False.</span>
-
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Create tiles directory if it does not exist</span>
         <span class="k">if</span> <span class="n">save_img</span><span class="p">:</span>
@@ -795,7 +779,7 @@
         <span class="c1"># If no mask slide is provided, mask coordinates will contain all tiles of the slide.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">mask_start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
-            <span class="n">slide_tiles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">slides</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tiles</span>
+            <span class="n">slide_tiles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference_slide</span><span class="o">.</span><span class="n">tiles</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mask_coordinates</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
             <span class="n">cols</span><span class="p">,</span> <span class="n">rows</span> <span class="o">=</span> <span class="n">slide_tiles</span><span class="o">.</span><span class="n">level_tiles</span><span class="p">[</span><span class="n">slide_tiles</span><span class="o">.</span><span class="n">level_count</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">cols</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Extracting mask tiles&quot;</span><span class="p">):</span>
@@ -809,10 +793,9 @@
             <span class="n">cols</span><span class="p">,</span> <span class="n">rows</span> <span class="o">=</span> <span class="n">mask_tiles</span><span class="o">.</span><span class="n">level_tiles</span><span class="p">[</span><span class="n">mask_tiles</span><span class="o">.</span><span class="n">level_count</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">cols</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Extracting mask tiles&quot;</span><span class="p">):</span>
                 <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rows</span><span class="p">):</span>
-                    <span class="n">temp</span> <span class="o">=</span> <span class="n">mask_tiles</span><span class="o">.</span><span class="n">get_tile</span><span class="p">(</span>
-                        <span class="n">mask_tiles</span><span class="o">.</span><span class="n">level_count</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">))</span>
+                    <span class="n">temp</span> <span class="o">=</span> <span class="n">mask_tiles</span><span class="o">.</span><span class="n">get_tile</span><span class="p">(</span><span class="n">mask_tiles</span><span class="o">.</span><span class="n">level_count</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">))</span>
                     <span class="k">if</span> <span class="n">temp</span><span class="o">.</span><span class="n">mode</span> <span class="o">!=</span> <span class="s2">&quot;RGB&quot;</span><span class="p">:</span>
-                        <span class="n">temp</span> <span class="o">=</span> <span class="n">temp</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">&quot;RBG&quot;</span><span class="p">)</span>
+                        <span class="n">temp</span> <span class="o">=</span> <span class="n">temp</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s2">&quot;RGB&quot;</span><span class="p">)</span>
                     <span class="n">temp</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span>
                     <span class="n">mean</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span>
 
@@ -843,8 +826,7 @@
         <span class="c1"># Save mask coordinates as pickle</span>
         <span class="n">out</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pickle_dir</span><span class="p">,</span> <span class="s2">&quot;mask_coordinates.pickle&quot;</span><span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
-            <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask_coordinates</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span>
-                        <span class="n">protocol</span><span class="o">=</span><span class="n">pickle</span><span class="o">.</span><span class="n">HIGHEST_PROTOCOL</span><span class="p">)</span>
+            <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask_coordinates</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="n">pickle</span><span class="o">.</span><span class="n">HIGHEST_PROTOCOL</span><span class="p">)</span>
         <span class="c1"># pickle.dump(self.mask_coordinates, open(out, &quot;wb&quot;))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Successfully saved mask coordinates to </span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Finished Mask Tile Extraction&quot;</span><span class="p">)</span></div>
@@ -900,13 +882,17 @@
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intermediate_registration_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">reference_slide</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Registering slides with reference slide </span><span class="si">{</span><span class="n">reference_slide</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="p">)</span>
+            <span class="c1"># Accept either a Slide object or a path string for reference_slide</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">reference_slide</span><span class="p">,</span> <span class="n">Slide</span><span class="p">):</span>
+                <span class="n">ref_path</span> <span class="o">=</span> <span class="n">reference_slide</span><span class="o">.</span><span class="n">orig_path</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ref_path</span> <span class="o">=</span> <span class="n">reference_slide</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Registering slides with reference slide </span><span class="si">{</span><span class="n">ref_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="n">register_slides_with_reference</span><span class="p">(</span>
                 <span class="n">slide_src_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">src_dir</span><span class="p">,</span>
                 <span class="n">results_dst_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">intermediate_registration_dir</span><span class="p">,</span>
-                <span class="n">referenceSlide</span><span class="o">=</span><span class="n">reference_slide</span><span class="p">,</span>
+                <span class="n">registered_slides_dst</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">registration_dir</span><span class="p">,</span>
+                <span class="n">referenceSlide</span><span class="o">=</span><span class="n">ref_path</span><span class="p">,</span>
                 <span class="n">microregistration</span><span class="o">=</span><span class="n">microregistration</span><span class="p">,</span>
                 <span class="n">max_non_rigid_registration_dim_px</span><span class="o">=</span><span class="n">max_non_rigid_registration_dim_px</span><span class="p">,</span>
                 <span class="n">crop</span><span class="o">=</span><span class="n">crop</span><span class="p">,</span>
@@ -917,7 +903,7 @@
             <span class="p">)</span>
             <span class="n">register_slides_high_resolution</span><span class="p">(</span>
                 <span class="n">slide_src_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">src_dir</span><span class="p">,</span>
-                <span class="n">results_dst_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">intermediate_registration_dir</span><span class="p">,</span>
+                <span class="n">results_dst_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">registration_dir</span><span class="p">,</span>
                 <span class="n">registered_slides_dst</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">registration_dir</span><span class="p">,</span>
                 <span class="n">micro_reg_fraction</span><span class="o">=</span><span class="n">high_res_fraction</span><span class="p">,</span>
             <span class="p">)</span>
@@ -1113,10 +1099,8 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">quantify_single_slide</span><span class="p">(</span><span class="n">slide</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">save_imgs</span><span class="p">,</span> <span class="n">masking_mode</span><span class="p">)</span>
                 <span class="n">c</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">end_quant_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Finished quantification for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="si">}</span><span class="s2"> in </span><span class="se">\</span>
-<span class="s2">                </span><span class="si">{</span><span class="nb">round</span><span class="p">((</span><span class="n">end_quant_time</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start_quant_time</span><span class="p">)</span><span class="o">/</span><span class="mi">60</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2"> minutes.&quot;</span>
-        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Finished quantification for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">collection_name</span><span class="si">}</span><span class="s2"> in </span><span class="se">\</span>
+<span class="s2">                </span><span class="si">{</span><span class="nb">round</span><span class="p">((</span><span class="n">end_quant_time</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start_quant_time</span><span class="p">)</span><span class="o">/</span><span class="mi">60</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2"> minutes.&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">[</span><span class="s2">&quot;quantified&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span></div>
 
 
@@ -1162,16 +1146,14 @@
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask_coordinates</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="s2">&quot;Extracting mask coordinates before quantification&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Extracting mask coordinates before quantification&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">extract_mask_tile_coordinates</span><span class="p">()</span>
 
         <span class="n">slide</span> <span class="o">=</span> <span class="p">[</span><span class="n">slide</span> <span class="k">for</span> <span class="n">slide</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">slides</span> <span class="k">if</span> <span class="n">slide</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">slide_name</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
 
         <span class="c1"># Create directories for images if they are to be saved.</span>
         <span class="k">if</span> <span class="n">save_img</span><span class="p">:</span>
-            <span class="n">dab_tile_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">tiles_dir</span><span class="p">,</span> <span class="n">slide_name</span><span class="p">,</span> <span class="n">DAB_TILE_DIR</span><span class="p">)</span>
+            <span class="n">dab_tile_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tiles_dir</span><span class="p">,</span> <span class="n">slide_name</span><span class="p">,</span> <span class="n">DAB_TILE_DIR</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">masking_mode</span> <span class="o">==</span> <span class="s2">&quot;pixel-level&quot;</span><span class="p">:</span>
                 <span class="n">slide</span><span class="o">.</span><span class="n">quantify_slide</span><span class="p">(</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">mask_coordinates</span><span class="p">,</span>
@@ -1244,17 +1226,14 @@
                 <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                 <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">out</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">pickle_dir</span><span class="p">,</span> <span class="s2">&quot;quantification_results.pickle&quot;</span><span class="p">)</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pickle_dir</span><span class="p">,</span> <span class="s2">&quot;quantification_results.pickle&quot;</span><span class="p">)</span>
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
                 <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">quantification_results</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="n">pickle</span><span class="o">.</span><span class="n">HIGHEST_PROTOCOL</span>
                 <span class="p">)</span>
             <span class="n">save_end_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Successfully saved quantification results to </span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2"> in </span><span class="se">\</span>
-<span class="s2">                    </span><span class="si">{</span><span class="nb">round</span><span class="p">((</span><span class="n">save_end_time</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">save_start_time</span><span class="p">),</span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2"> seconds&quot;</span>
-            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Successfully saved quantification results to </span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2"> in </span><span class="se">\</span>
+<span class="s2">                    </span><span class="si">{</span><span class="nb">round</span><span class="p">((</span><span class="n">save_end_time</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">save_start_time</span><span class="p">),</span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                 <span class="s2">&quot;No quantification results were found. Please call quantify_all_slides() to quantify all slides </span><span class="se">\</span>
@@ -1292,8 +1271,7 @@
 
         <span class="c1"># Pass each combination to the compute_dual_antigen_combination method</span>
         <span class="k">for</span> <span class="n">combo</span> <span class="ow">in</span> <span class="n">slide_combinations</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_antigen_pair</span><span class="p">(</span>
-                <span class="n">combo</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">combo</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">masking_mode</span><span class="o">=</span><span class="n">masking_mode</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_antigen_pair</span><span class="p">(</span><span class="n">combo</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">combo</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">masking_mode</span><span class="o">=</span><span class="n">masking_mode</span><span class="p">)</span>
         <span class="n">dual_expression_time_end</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Finished dual antigen expression analysis in </span><span class="se">\</span>
@@ -1375,8 +1353,7 @@
         <span class="c1"># Create directory for pair of slides</span>
         <span class="k">if</span> <span class="n">save_img</span><span class="p">:</span>
             <span class="c1"># Create Colocalization directory if it does not exist</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">colocalization_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">dest_dir</span><span class="p">,</span> <span class="n">COLOCALIZATION</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">colocalization_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dest_dir</span><span class="p">,</span> <span class="n">COLOCALIZATION</span><span class="p">)</span>
             <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">colocalization_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
             <span class="c1"># Create sub-directory for slide pair</span>
@@ -1444,8 +1421,7 @@
             <span class="p">[</span><span class="n">slide1</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">slide2</span><span class="o">.</span><span class="n">name</span><span class="p">],</span>
             <span class="n">antigen_profiles</span><span class="o">=</span><span class="p">[</span><span class="n">slide1</span><span class="o">.</span><span class="n">antigen_profile</span><span class="p">,</span> <span class="n">slide2</span><span class="o">.</span><span class="n">antigen_profile</span><span class="p">],</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">save_antigen_combinations</span><span class="p">(</span>
-            <span class="n">result_type</span><span class="o">=</span><span class="s2">&quot;dual&quot;</span><span class="p">,</span> <span class="n">masking_mode</span><span class="o">=</span><span class="n">masking_mode</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_antigen_combinations</span><span class="p">(</span><span class="n">result_type</span><span class="o">=</span><span class="s2">&quot;dual&quot;</span><span class="p">,</span> <span class="n">masking_mode</span><span class="o">=</span><span class="n">masking_mode</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SlideCollection.evaluate_antigen_triplet">
@@ -1482,8 +1458,7 @@
         <span class="c1"># Create directory for triplet of slides</span>
         <span class="k">if</span> <span class="n">save_img</span><span class="p">:</span>
             <span class="c1"># Create Colocalization directory if it does not exist</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">colocalization_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">dest_dir</span><span class="p">,</span> <span class="n">COLOCALIZATION</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">colocalization_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dest_dir</span><span class="p">,</span> <span class="n">COLOCALIZATION</span><span class="p">)</span>
             <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">colocalization_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
             <span class="c1"># Create sub-directory for slide triplet</span>
@@ -1563,8 +1538,7 @@
                 <span class="n">slide3</span><span class="o">.</span><span class="n">antigen_profile</span><span class="p">,</span>
             <span class="p">],</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">save_antigen_combinations</span><span class="p">(</span>
-            <span class="n">result_type</span><span class="o">=</span><span class="s2">&quot;triplet&quot;</span><span class="p">,</span> <span class="n">masking_mode</span><span class="o">=</span><span class="n">masking_mode</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_antigen_combinations</span><span class="p">(</span><span class="n">result_type</span><span class="o">=</span><span class="s2">&quot;triplet&quot;</span><span class="p">,</span> <span class="n">masking_mode</span><span class="o">=</span><span class="n">masking_mode</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">summarize_antigen_combinations</span><span class="p">(</span>
@@ -1580,19 +1554,19 @@
 <span class="sd">            - antigen_profiles (list): List of all antigen profiles of the slides in the combination.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">processed_tiles</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">sum_total_coverage</span> <span class="o">=</span> <span class="mf">0.00</span>
-        <span class="n">sum_total_overlap</span> <span class="o">=</span> <span class="mf">0.00</span>
-        <span class="n">sum_total_complement</span> <span class="o">=</span> <span class="mf">0.00</span>
-        <span class="n">sum_high_overlap</span> <span class="o">=</span> <span class="mf">0.00</span>
-        <span class="n">sum_high_complement</span> <span class="o">=</span> <span class="mf">0.00</span>
-        <span class="n">sum_pos_overlap</span> <span class="o">=</span> <span class="mf">0.00</span>
-        <span class="n">sum_pos_complement</span> <span class="o">=</span> <span class="mf">0.00</span>
-        <span class="n">sum_low_overlap</span> <span class="o">=</span> <span class="mf">0.00</span>
-        <span class="n">sum_low_complement</span> <span class="o">=</span> <span class="mf">0.00</span>
-        <span class="n">sum_negative</span> <span class="o">=</span> <span class="mf">0.00</span>
-        <span class="n">sum_tissue</span> <span class="o">=</span> <span class="mf">0.00</span>
-        <span class="n">sum_background</span> <span class="o">=</span> <span class="mf">0.00</span>
-        <span class="n">sum_mask</span> <span class="o">=</span> <span class="mf">0.00</span>
+        <span class="n">sum_total_coverage_weighted</span> <span class="o">=</span> <span class="mf">0.00</span>
+        <span class="n">sum_total_overlap_weighted</span> <span class="o">=</span> <span class="mf">0.00</span>
+        <span class="n">sum_total_complement_weighted</span> <span class="o">=</span> <span class="mf">0.00</span>
+        <span class="n">sum_high_overlap_weighted</span> <span class="o">=</span> <span class="mf">0.00</span>
+        <span class="n">sum_high_complement_weighted</span> <span class="o">=</span> <span class="mf">0.00</span>
+        <span class="n">sum_pos_overlap_weighted</span> <span class="o">=</span> <span class="mf">0.00</span>
+        <span class="n">sum_pos_complement_weighted</span> <span class="o">=</span> <span class="mf">0.00</span>
+        <span class="n">sum_low_overlap_weighted</span> <span class="o">=</span> <span class="mf">0.00</span>
+        <span class="n">sum_low_complement_weighted</span> <span class="o">=</span> <span class="mf">0.00</span>
+        <span class="n">sum_negative_weighted</span> <span class="o">=</span> <span class="mf">0.00</span>
+        <span class="n">sum_tissue_weighted</span> <span class="o">=</span> <span class="mf">0.00</span>
+        <span class="n">sum_background_weighted</span> <span class="o">=</span> <span class="mf">0.00</span>
+        <span class="n">sum_mask_area</span> <span class="o">=</span> <span class="mf">0.00</span>
         <span class="n">sum_non_mask</span> <span class="o">=</span> <span class="mf">0.00</span>
         <span class="n">error1</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">error2</span> <span class="o">=</span> <span class="mi">0</span>
@@ -1600,39 +1574,76 @@
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">comparison_dict</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Flag&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">processed_tiles</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">sum_total_coverage</span> <span class="o">+=</span> <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Total Coverage&quot;</span><span class="p">]</span>
-                <span class="n">sum_total_overlap</span> <span class="o">+=</span> <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Total Overlap&quot;</span><span class="p">]</span>
-                <span class="n">sum_total_complement</span> <span class="o">+=</span> <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Total Complement&quot;</span><span class="p">]</span>
-                <span class="n">sum_high_overlap</span> <span class="o">+=</span> <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;High Positive Overlap&quot;</span><span class="p">]</span>
-                <span class="n">sum_high_complement</span> <span class="o">+=</span> <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;High Positive Complement&quot;</span><span class="p">]</span>
-                <span class="n">sum_pos_overlap</span> <span class="o">+=</span> <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Medium Positive Overlap&quot;</span><span class="p">]</span>
-                <span class="n">sum_pos_complement</span> <span class="o">+=</span> <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Medium Positive Complement&quot;</span><span class="p">]</span>
-                <span class="n">sum_low_overlap</span> <span class="o">+=</span> <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Low Positive Overlap&quot;</span><span class="p">]</span>
-                <span class="n">sum_low_complement</span> <span class="o">+=</span> <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Low Positive Complement&quot;</span><span class="p">]</span>
-                <span class="n">sum_negative</span> <span class="o">+=</span> <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Negative&quot;</span><span class="p">]</span>
-                <span class="n">sum_tissue</span> <span class="o">+=</span> <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Tissue&quot;</span><span class="p">]</span>
-                <span class="n">sum_background</span> <span class="o">+=</span> <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Background / No Tissue&quot;</span><span class="p">]</span>
-                <span class="n">sum_mask</span> <span class="o">+=</span> <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Mask Area&quot;</span><span class="p">]</span>
+                <span class="n">tile_mask_pixels</span> <span class="o">=</span> <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Mask Area&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">100</span> <span class="o">*</span> <span class="mi">1048576</span>
+                <span class="n">sum_mask_area</span> <span class="o">+=</span> <span class="n">tile_mask_pixels</span>
+                <span class="n">sum_total_coverage_weighted</span> <span class="o">+=</span> <span class="p">(</span>
+                    <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Total Coverage&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">100</span> <span class="o">*</span> <span class="n">tile_mask_pixels</span>
+                <span class="p">)</span>
+                <span class="n">sum_total_overlap_weighted</span> <span class="o">+=</span> <span class="p">(</span>
+                    <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Total Overlap&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">100</span> <span class="o">*</span> <span class="n">tile_mask_pixels</span>
+                <span class="p">)</span>
+                <span class="n">sum_total_complement_weighted</span> <span class="o">+=</span> <span class="p">(</span>
+                    <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Total Complement&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">100</span> <span class="o">*</span> <span class="n">tile_mask_pixels</span>
+                <span class="p">)</span>
+                <span class="n">sum_high_overlap_weighted</span> <span class="o">+=</span> <span class="p">(</span>
+                    <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;High Positive Overlap&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">100</span> <span class="o">*</span> <span class="n">tile_mask_pixels</span>
+                <span class="p">)</span>
+                <span class="n">sum_high_complement_weighted</span> <span class="o">+=</span> <span class="p">(</span>
+                    <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;High Positive Complement&quot;</span><span class="p">]</span>
+                    <span class="o">/</span> <span class="mi">100</span>
+                    <span class="o">*</span> <span class="n">tile_mask_pixels</span>
+                <span class="p">)</span>
+                <span class="n">sum_pos_overlap_weighted</span> <span class="o">+=</span> <span class="p">(</span>
+                    <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Medium Positive Overlap&quot;</span><span class="p">]</span>
+                    <span class="o">/</span> <span class="mi">100</span>
+                    <span class="o">*</span> <span class="n">tile_mask_pixels</span>
+                <span class="p">)</span>
+                <span class="n">sum_pos_complement_weighted</span> <span class="o">+=</span> <span class="p">(</span>
+                    <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Medium Positive Complement&quot;</span><span class="p">]</span>
+                    <span class="o">/</span> <span class="mi">100</span>
+                    <span class="o">*</span> <span class="n">tile_mask_pixels</span>
+                <span class="p">)</span>
+                <span class="n">sum_low_overlap_weighted</span> <span class="o">+=</span> <span class="p">(</span>
+                    <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Low Positive Overlap&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">100</span> <span class="o">*</span> <span class="n">tile_mask_pixels</span>
+                <span class="p">)</span>
+                <span class="n">sum_low_complement_weighted</span> <span class="o">+=</span> <span class="p">(</span>
+                    <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Low Positive Complement&quot;</span><span class="p">]</span>
+                    <span class="o">/</span> <span class="mi">100</span>
+                    <span class="o">*</span> <span class="n">tile_mask_pixels</span>
+                <span class="p">)</span>
+                <span class="n">sum_negative_weighted</span> <span class="o">+=</span> <span class="p">(</span>
+                    <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Negative&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">100</span> <span class="o">*</span> <span class="n">tile_mask_pixels</span>
+                <span class="p">)</span>
+                <span class="n">sum_tissue_weighted</span> <span class="o">+=</span> <span class="p">(</span>
+                    <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Tissue&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">100</span> <span class="o">*</span> <span class="n">tile_mask_pixels</span>
+                <span class="p">)</span>
+                <span class="n">sum_background_weighted</span> <span class="o">+=</span> <span class="p">(</span>
+                    <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Background / No Tissue&quot;</span><span class="p">]</span>
+                    <span class="o">/</span> <span class="mi">100</span>
+                    <span class="o">*</span> <span class="n">tile_mask_pixels</span>
+                <span class="p">)</span>
                 <span class="n">sum_non_mask</span> <span class="o">+=</span> <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;Non-mask Area&quot;</span><span class="p">]</span>
             <span class="k">elif</span> <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Flag&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
                 <span class="n">error1</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">elif</span> <span class="n">comparison_dict</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Flag&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">2</span><span class="p">:</span>
                 <span class="n">error2</span> <span class="o">+=</span> <span class="mi">1</span>
 
-        <span class="k">if</span> <span class="n">processed_tiles</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">sum_total_coverage</span> <span class="o">/=</span> <span class="n">processed_tiles</span>
-            <span class="n">sum_total_overlap</span> <span class="o">/=</span> <span class="n">processed_tiles</span>
-            <span class="n">sum_total_complement</span> <span class="o">/=</span> <span class="n">processed_tiles</span>
-            <span class="n">sum_high_overlap</span> <span class="o">/=</span> <span class="n">processed_tiles</span>
-            <span class="n">sum_high_complement</span> <span class="o">/=</span> <span class="n">processed_tiles</span>
-            <span class="n">sum_pos_overlap</span> <span class="o">/=</span> <span class="n">processed_tiles</span>
-            <span class="n">sum_pos_complement</span> <span class="o">/=</span> <span class="n">processed_tiles</span>
-            <span class="n">sum_low_overlap</span> <span class="o">/=</span> <span class="n">processed_tiles</span>
-            <span class="n">sum_low_complement</span> <span class="o">/=</span> <span class="n">processed_tiles</span>
-            <span class="n">sum_negative</span> <span class="o">/=</span> <span class="n">processed_tiles</span>
-            <span class="n">sum_tissue</span> <span class="o">/=</span> <span class="n">processed_tiles</span>
-            <span class="n">sum_background</span> <span class="o">/=</span> <span class="n">processed_tiles</span>
-            <span class="n">sum_mask</span> <span class="o">/=</span> <span class="n">processed_tiles</span>
+        <span class="k">if</span> <span class="n">processed_tiles</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">sum_mask_area</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">sum_total_coverage</span> <span class="o">=</span> <span class="n">sum_total_coverage_weighted</span> <span class="o">/</span> <span class="n">sum_mask_area</span> <span class="o">*</span> <span class="mi">100</span>
+            <span class="n">sum_total_overlap</span> <span class="o">=</span> <span class="n">sum_total_overlap_weighted</span> <span class="o">/</span> <span class="n">sum_mask_area</span> <span class="o">*</span> <span class="mi">100</span>
+            <span class="n">sum_total_complement</span> <span class="o">=</span> <span class="n">sum_total_complement_weighted</span> <span class="o">/</span> <span class="n">sum_mask_area</span> <span class="o">*</span> <span class="mi">100</span>
+            <span class="n">sum_high_overlap</span> <span class="o">=</span> <span class="n">sum_high_overlap_weighted</span> <span class="o">/</span> <span class="n">sum_mask_area</span> <span class="o">*</span> <span class="mi">100</span>
+            <span class="n">sum_high_complement</span> <span class="o">=</span> <span class="n">sum_high_complement_weighted</span> <span class="o">/</span> <span class="n">sum_mask_area</span> <span class="o">*</span> <span class="mi">100</span>
+            <span class="n">sum_pos_overlap</span> <span class="o">=</span> <span class="n">sum_pos_overlap_weighted</span> <span class="o">/</span> <span class="n">sum_mask_area</span> <span class="o">*</span> <span class="mi">100</span>
+            <span class="n">sum_pos_complement</span> <span class="o">=</span> <span class="n">sum_pos_complement_weighted</span> <span class="o">/</span> <span class="n">sum_mask_area</span> <span class="o">*</span> <span class="mi">100</span>
+            <span class="n">sum_low_overlap</span> <span class="o">=</span> <span class="n">sum_low_overlap_weighted</span> <span class="o">/</span> <span class="n">sum_mask_area</span> <span class="o">*</span> <span class="mi">100</span>
+            <span class="n">sum_low_complement</span> <span class="o">=</span> <span class="n">sum_low_complement_weighted</span> <span class="o">/</span> <span class="n">sum_mask_area</span> <span class="o">*</span> <span class="mi">100</span>
+            <span class="n">sum_negative</span> <span class="o">=</span> <span class="n">sum_negative_weighted</span> <span class="o">/</span> <span class="n">sum_mask_area</span> <span class="o">*</span> <span class="mi">100</span>
+            <span class="n">sum_tissue</span> <span class="o">=</span> <span class="n">sum_tissue_weighted</span> <span class="o">/</span> <span class="n">sum_mask_area</span> <span class="o">*</span> <span class="mi">100</span>
+            <span class="n">sum_background</span> <span class="o">=</span> <span class="n">sum_background_weighted</span> <span class="o">/</span> <span class="n">sum_mask_area</span> <span class="o">*</span> <span class="mi">100</span>
+            <span class="n">sum_mask</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">sum_mask_area</span> <span class="o">/</span> <span class="p">(</span><span class="n">processed_tiles</span> <span class="o">*</span> <span class="mi">1048576</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span>
+            <span class="p">)</span>  <span class="c1"># average mask %</span>
             <span class="n">sum_non_mask</span> <span class="o">/=</span> <span class="n">processed_tiles</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">sum_total_coverage</span> <span class="o">=</span> <span class="mi">0</span>
@@ -1700,9 +1711,9 @@
         <span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">antigen_profiles</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
             <span class="n">overlap_dict</span><span class="p">[</span><span class="s2">&quot;Thresholds3&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">antigen_profiles</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;high_positive_threshold&quot;</span><span class="p">],</span>
-                <span class="n">antigen_profiles</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;medium_positive_threshold&quot;</span><span class="p">],</span>
-                <span class="n">antigen_profiles</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;low_positive_threshold&quot;</span><span class="p">],</span>
+                <span class="n">antigen_profiles</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="s2">&quot;high_positive_threshold&quot;</span><span class="p">],</span>
+                <span class="n">antigen_profiles</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="s2">&quot;medium_positive_threshold&quot;</span><span class="p">],</span>
+                <span class="n">antigen_profiles</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="s2">&quot;low_positive_threshold&quot;</span><span class="p">],</span>
                 <span class="mi">235</span><span class="p">,</span>
             <span class="p">]</span>
 
@@ -1741,8 +1752,7 @@
             <span class="n">csv_filename</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">masking_mode</span><span class="si">}</span><span class="s2">_triplet_antigen_expressions.csv&quot;</span>
             <span class="n">pickle_filename</span> <span class="o">=</span> <span class="s2">&quot;triplet_antigen_expressions.pickle&quot;</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Invalid result_type. Must be &#39;dual&#39; or &#39;triplet&#39;.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid result_type. Must be &#39;dual&#39; or &#39;triplet&#39;.&quot;</span><span class="p">)</span>
 
         <span class="c1"># Save results as CSV</span>
         <span class="n">summary_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
