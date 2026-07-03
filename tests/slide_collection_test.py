@@ -23,9 +23,7 @@ class DummySlide:
         self.is_mask = False
         self.is_reference = False
         # detailed_quantification_results must be an iterable mapping (tile index -> dict)
-        self.detailed_quantification_results = {
-            0: {"Tilename": "0_0", "Dummy": 1}
-        }
+        self.detailed_quantification_results = {0: {"Tilename": "0_0", "Dummy": 1}}
         # quantification_summary produced by quantify_slide
         self.quantification_summary = {"Name": name, "Coverage (%)": coverage}
 
@@ -50,8 +48,7 @@ class TestSlideCollectionInitialization(unittest.TestCase):
         )
 
         # Verify that the test file exists
-        assert os.path.exists(
-            test_file_path), f"Test file not found: {test_file_path}"
+        assert os.path.exists(test_file_path), f"Test file not found: {test_file_path}"
 
         # Add the test file to the source directory with different filenames
         self.mock_files = [
@@ -77,7 +74,9 @@ class TestSlideCollectionInitialization(unittest.TestCase):
 
     @patch("cubats.slide_collection.slide_collection.register_slides")
     @patch.object(SlideCollection, "_update_slide_paths_after_registration")
-    def test_register_slides_sets_status_and_updates_paths(self, mock_update, mock_register_fn):
+    def test_register_slides_sets_status_and_updates_paths(
+        self, mock_update, mock_register_fn
+    ):
         # instantiate collection
         sc = SlideCollection("TestCol", self.src_dir, self.dst_dir)
         # call register_slides (external register_slides is patched to no-op)
@@ -108,15 +107,12 @@ class TestSlideCollectionInitialization(unittest.TestCase):
                 continue
             lname = s.name.lower()
             if "ag1" in lname:
-                self.assertEqual(s.antigen_profile.get(
-                    "high_positive_threshold"), 200)
+                self.assertEqual(s.antigen_profile.get("high_positive_threshold"), 200)
             if "ag2" in lname:
-                self.assertEqual(s.antigen_profile.get(
-                    "high_positive_threshold"), 150)
+                self.assertEqual(s.antigen_profile.get("high_positive_threshold"), 150)
             if "ag3" in lname:
                 # AG3 should match both Pat_ID_AG3 and Pat_ID_AG3
-                self.assertEqual(s.antigen_profile.get(
-                    "high_positive_threshold"), 100)
+                self.assertEqual(s.antigen_profile.get("high_positive_threshold"), 100)
 
         # Now test JSON input (records list)
         profiles_json = [
@@ -129,10 +125,8 @@ class TestSlideCollectionInitialization(unittest.TestCase):
 
         sc.add_antigen_profiles(json_path)
         # AG4 slide should now have threshold 50
-        ag4_slide = next(
-            s for s in sc.slides if "ag4" in s.name.lower())
-        self.assertEqual(ag4_slide.antigen_profile.get(
-            "high_positive_threshold"), 50)
+        ag4_slide = next(s for s in sc.slides if "ag4" in s.name.lower())
+        self.assertEqual(ag4_slide.antigen_profile.get("high_positive_threshold"), 50)
 
     def test_non_matching_profile_keeps_default(self):
         # Standard Library
@@ -143,11 +137,9 @@ class TestSlideCollectionInitialization(unittest.TestCase):
         # create a CSV with a Name that doesn't match any slide
         csv_path = os.path.join(self.temp_dir.name, "profiles_nonmatch.csv")
         with open(csv_path, "w", newline="") as f:
-            writer = csv.DictWriter(
-                f, fieldnames=["Name", "high_positive_threshold"])
+            writer = csv.DictWriter(f, fieldnames=["Name", "high_positive_threshold"])
             writer.writeheader()
-            writer.writerow(
-                {"Name": "NONMATCH", "high_positive_threshold": 200})
+            writer.writerow({"Name": "NONMATCH", "high_positive_threshold": 200})
 
         sc.add_antigen_profiles(csv_path)
 
@@ -157,18 +149,17 @@ class TestSlideCollectionInitialization(unittest.TestCase):
                 continue
             self.assertIsNotNone(s.antigen_profile)
             self.assertEqual(s.antigen_profile.get("Name"), "default")
-            self.assertEqual(s.antigen_profile.get(
-                "high_positive_threshold"), 61)
-            self.assertEqual(s.antigen_profile.get(
-                "medium_positive_threshold"), 121)
-            self.assertEqual(s.antigen_profile.get(
-                "low_positive_threshold"), 181)
+            self.assertEqual(s.antigen_profile.get("high_positive_threshold"), 61)
+            self.assertEqual(s.antigen_profile.get("medium_positive_threshold"), 121)
+            self.assertEqual(s.antigen_profile.get("low_positive_threshold"), 181)
 
     def test_reference_are_skipped(self):
         sc = SlideCollection("Test_Collection", self.src_dir, self.dst_dir)
         #  create profile that would match 'HE' and a slide we mark as mask
-        profiles = [{"Name": "HE", "foo": "should_not_apply"},
-                    {"Name": "mask", "bar": 1}]
+        profiles = [
+            {"Name": "HE", "foo": "should_not_apply"},
+            {"Name": "mask", "bar": 1},
+        ]
         csv_path = os.path.join(self.temp_dir.name, "profiles2.csv")
         pd.DataFrame(profiles).to_csv(csv_path, index=False)
 
@@ -197,7 +188,9 @@ class TestSlideCollectionInitialization(unittest.TestCase):
 
     @patch("cubats.slide_collection.slide_collection.run_tumor_segmentation")
     @patch.object(SlideCollection, "add_mask_to_collection")
-    def test_tumor_segmentation_sets_segmented_and_adds_mask(self, mock_add_mask, mock_seg):
+    def test_tumor_segmentation_sets_segmented_and_adds_mask(
+        self, mock_add_mask, mock_seg
+    ):
         sc = SlideCollection("TestCol", self.src_dir, self.dst_dir)
         # call tumor_segmentation (segmentation function is patched)
         sc.tumor_segmentation(model_path="dummy_model")
@@ -207,7 +200,9 @@ class TestSlideCollectionInitialization(unittest.TestCase):
 
     @patch.object(SlideCollection, "_update_slide_paths_after_registration")
     @patch.object(SlideCollection, "add_mask_to_collection")
-    def test_load_previous_results_detects_existing_registration_dir(self, mock_add_mask, mock_update):
+    def test_load_previous_results_detects_existing_registration_dir(
+        self, mock_add_mask, mock_update
+    ):
         # create registration dir before instantiation to simulate previous run
         reg_dir = os.path.join(self.dst_dir, "registration")
         os.makedirs(reg_dir, exist_ok=True)
@@ -235,8 +230,7 @@ class TestUpdatePaths(unittest.TestCase):
         self.test_file = os.path.join(
             os.path.dirname(__file__), "test_files", "test_file.tiff"
         )
-        assert os.path.exists(
-            self.test_file), f"Missing test file: {self.test_file}"
+        assert os.path.exists(self.test_file), f"Missing test file: {self.test_file}"
 
         # create a few source slides
         self.fnames = [
@@ -282,8 +276,7 @@ class TestUpdatePaths(unittest.TestCase):
 
     def test_update_slide_paths_after_registration_updates_collection_slides(self):
         # Before update, slides should point to src files
-        slide_basenames_before = [os.path.basename(
-            s.orig_path) for s in self.sc.slides]
+        slide_basenames_before = [os.path.basename(s.orig_path) for s in self.sc.slides]
         for b in [os.path.basename(p) for p in self.fnames]:
             self.assertIn(b, slide_basenames_before)
 
@@ -304,8 +297,7 @@ class TestUpdatePaths(unittest.TestCase):
 
     def test_update_slide_paths_after_registration_reg_dir_Nonexistent(self):
         # Before update, slides should point to src files
-        slide_basenames_before = [os.path.basename(
-            s.orig_path) for s in self.sc.slides]
+        slide_basenames_before = [os.path.basename(s.orig_path) for s in self.sc.slides]
         for b in [os.path.basename(p) for p in self.fnames]:
             self.assertIn(b, slide_basenames_before)
 
@@ -373,14 +365,13 @@ class TestAddMaskToCollection(unittest.TestCase):
         self.assertTrue(self.sc.mask.is_mask)
         self.assertEqual(self.sc.mask.name, "Pat_ID_HE_mask")
         # since update_slide is called with a real tiff, orig_path should point to mask file
-        self.assertEqual(
-            getattr(self.sc.mask, "orig_path", None), mask_file)
+        self.assertEqual(getattr(self.sc.mask, "orig_path", None), mask_file)
 
     def test_new_mask_slide_is_created(self):
         reg = os.path.join(self.dst, "registration2")
         os.makedirs(reg, exist_ok=True)
         # create mask file for a slide not present in collection
-        mask_file = os.path.join(reg, "New_Slide_mask.tiff")
+        mask_file = os.path.join(reg, "HE_mask.tiff")
         shutil.copy(self.test_file, mask_file)
 
         self.sc.add_mask_to_collection(reg)
@@ -389,7 +380,7 @@ class TestAddMaskToCollection(unittest.TestCase):
         self.assertIsNotNone(self.sc.mask)
         self.assertTrue(self.sc.mask.is_mask)
         # name expected by cutils.get_name (without extension); ensure we find it
-        self.assertIn(self.sc.mask.name.lower(), "new_slide_mask")
+        self.assertIn(self.sc.mask.name, "HE_mask")
 
     def test_unsupported_extension_is_skipped(self):
         reg = os.path.join(self.dst, "registration3")
@@ -437,8 +428,7 @@ class TestExtractMaskTileCoordinates(unittest.TestCase):
         self.test_file = os.path.join(
             os.path.dirname(__file__), "test_files", "test_file.tiff"
         )
-        assert os.path.exists(
-            self.test_file), "missing test fixture test_file.tiff"
+        assert os.path.exists(self.test_file), "missing test fixture test_file.tiff"
 
     def tearDown(self):
         try:
@@ -472,7 +462,9 @@ class TestExtractMaskTileCoordinates(unittest.TestCase):
             data = pickle.load(f)
         self.assertEqual(data, sc.mask_coordinates)
 
-    def test_extract_mask_tiles_with_mask_and_save_images_creates_mask_dir_and_pickle(self):
+    def test_extract_mask_tiles_with_mask_and_save_images_creates_mask_dir_and_pickle(
+        self,
+    ):
         # create slide(s) in src and a registration dir with a mask image
         shutil.copy(self.test_file, os.path.join(self.src, "Pat_ID_HE.tiff"))
         reg = os.path.join(self.dst, "registration")
@@ -503,8 +495,7 @@ class TestExtractMaskTileCoordinates(unittest.TestCase):
         mask_tiles_dir = os.path.join(sc.tiles_dir, "mask")
         self.assertTrue(os.path.isdir(mask_tiles_dir))
         # there should be at least one saved tile file when coords not empty
-        saved_tiles = [f for f in os.listdir(
-            mask_tiles_dir) if f.endswith(".tif")]
+        saved_tiles = [f for f in os.listdir(mask_tiles_dir) if f.endswith(".tif")]
         # directory exists; content may be empty depending on fixture
         self.assertTrue(len(saved_tiles) >= 0)
 
@@ -526,12 +517,16 @@ class TestQuickQuantificationAndColocalization(unittest.TestCase):
                 self.registered_path = None
                 self.is_mask = is_mask
                 self.is_reference = is_reference
-                self.antigen_profile = None if (is_mask or is_reference) else {
-                    "Name": "default",
-                    "low_positive_threshold": 181,
-                    "medium_positive_threshold": 121,
-                    "high_positive_threshold": 61,
-                }
+                self.antigen_profile = (
+                    None
+                    if (is_mask or is_reference)
+                    else {
+                        "Name": "default",
+                        "low_positive_threshold": 181,
+                        "medium_positive_threshold": 121,
+                        "high_positive_threshold": 61,
+                    }
+                )
                 # minimal tiles object (one level, 1x1) with get_tile returning an RGB PIL image
                 self.tiles = SimpleNamespace(
                     level_count=1,
@@ -539,7 +534,8 @@ class TestQuickQuantificationAndColocalization(unittest.TestCase):
                     level_dimensions=[(8, 8)],
                     tile_count=1,
                     get_tile=lambda level, coord: Image.new(
-                        "RGB", (8, 8), (255, 255, 255)),
+                        "RGB", (8, 8), (255, 255, 255)
+                    ),
                 )
                 self.properties = {
                     "name": self.name,
@@ -553,7 +549,8 @@ class TestQuickQuantificationAndColocalization(unittest.TestCase):
                 }
 
         self._slide_patcher = patch(
-            "cubats.slide_collection.slide_collection.Slide", new=_StubSlide)
+            "cubats.slide_collection.slide_collection.Slide", new=_StubSlide
+        )
         self._slide_patcher.start()
 
         self.sc = SlideCollection("C", self.src, self.dst)
@@ -582,16 +579,14 @@ class TestQuickQuantificationAndColocalization(unittest.TestCase):
         self.sc.mask_coordinates = [(0, 0)]
 
         # call quantify_single_slide - should append to quantification_results and write files
-        self.sc.quantify_single_slide(
-            "S1", save_img=False, masking_mode="tile-level")
+        self.sc.quantify_single_slide("S1", save_img=False, masking_mode="tile-level")
 
         # results DataFrame populated
         self.assertEqual(len(self.sc.quantification_results), 1)
         self.assertEqual(self.sc.quantification_results.iloc[0]["Name"], "S1")
 
         # pickle file exists
-        out_pickle = os.path.join(
-            self.sc.pickle_dir, "quantification_results.pickle")
+        out_pickle = os.path.join(self.sc.pickle_dir, "quantification_results.pickle")
         self.assertTrue(os.path.exists(out_pickle))
         with open(out_pickle, "rb") as f:
             loaded = pickle.load(f)
@@ -601,10 +596,16 @@ class TestQuickQuantificationAndColocalization(unittest.TestCase):
         # create two dummy slides with matching tile names and antigen profiles
         s1 = DummySlide("A1")
         s2 = DummySlide("A2")
-        s1.antigen_profile = {"high_positive_threshold": 200,
-                              "medium_positive_threshold": 121, "low_positive_threshold": 61}
-        s2.antigen_profile = {"high_positive_threshold": 150,
-                              "medium_positive_threshold": 121, "low_positive_threshold": 61}
+        s1.antigen_profile = {
+            "high_positive_threshold": 200,
+            "medium_positive_threshold": 121,
+            "low_positive_threshold": 61,
+        }
+        s2.antigen_profile = {
+            "high_positive_threshold": 150,
+            "medium_positive_threshold": 121,
+            "low_positive_threshold": 61,
+        }
         # detailed_quantification_results must have identical keys and 'Tilename' for iterable construction
         s1.detailed_quantification_results = {0: {"Tilename": "0_0"}}
         s2.detailed_quantification_results = {0: {"Tilename": "0_0"}}
@@ -637,13 +638,13 @@ class TestQuickQuantificationAndColocalization(unittest.TestCase):
 
             # call evaluate_antigen_pair which will call summarize & save
             self.sc.evaluate_antigen_pair(
-                s1, s2, save_img=False, masking_mode="tile-level")
+                s1, s2, save_img=False, masking_mode="tile-level"
+            )
 
         # dual_antigen_expressions DataFrame should have one row
         self.assertEqual(len(self.sc.dual_antigen_expressions), 1)
         # pickle should exist
-        out_pickle = os.path.join(
-            self.sc.pickle_dir, "dual_antigen_expressions.pickle")
+        out_pickle = os.path.join(self.sc.pickle_dir, "dual_antigen_expressions.pickle")
         self.assertTrue(os.path.exists(out_pickle))
         with open(out_pickle, "rb") as f:
             df = pickle.load(f)
@@ -654,12 +655,21 @@ class TestQuickQuantificationAndColocalization(unittest.TestCase):
         s1 = DummySlide("T1")
         s2 = DummySlide("T2")
         s3 = DummySlide("T3")
-        s1.antigen_profile = {"high_positive_threshold": 200,
-                              "medium_positive_threshold": 121, "low_positive_threshold": 61}
-        s2.antigen_profile = {"high_positive_threshold": 150,
-                              "medium_positive_threshold": 121, "low_positive_threshold": 61}
-        s3.antigen_profile = {"high_positive_threshold": 150,
-                              "medium_positive_threshold": 121, "low_positive_threshold": 61}
+        s1.antigen_profile = {
+            "high_positive_threshold": 200,
+            "medium_positive_threshold": 121,
+            "low_positive_threshold": 61,
+        }
+        s2.antigen_profile = {
+            "high_positive_threshold": 150,
+            "medium_positive_threshold": 121,
+            "low_positive_threshold": 61,
+        }
+        s3.antigen_profile = {
+            "high_positive_threshold": 150,
+            "medium_positive_threshold": 121,
+            "low_positive_threshold": 61,
+        }
         # detailed_quantification_results must have identical keys and 'Tilename'
         s1.detailed_quantification_results = {0: {"Tilename": "0_0"}}
         s2.detailed_quantification_results = {0: {"Tilename": "0_0"}}
@@ -694,15 +704,20 @@ class TestQuickQuantificationAndColocalization(unittest.TestCase):
             # try the singular first and fall back to plural if needed
             if hasattr(self.sc, "evaluate_antigen_triplet"):
                 self.sc.evaluate_antigen_triplet(
-                    s1, s2, s3, save_img=False, masking_mode="tile-level")
+                    s1, s2, s3, save_img=False, masking_mode="tile-level"
+                )
             else:
                 # fallback to plural name if library uses it
                 self.sc.evaluate_antigen_triplets(
-                    s1, s2, s3, save_img=False, masking_mode="tile-level")
+                    s1, s2, s3, save_img=False, masking_mode="tile-level"
+                )
 
         # Expect a pickle with antigen expressions to be written; search for it
-        pickles = [f for f in os.listdir(self.sc.pickle_dir) if f.endswith(
-            ".pickle") and "antigen" in f and "express" in f]
+        pickles = [
+            f
+            for f in os.listdir(self.sc.pickle_dir)
+            if f.endswith(".pickle") and "antigen" in f and "express" in f
+        ]
         self.assertTrue(len(pickles) >= 1)
         # load the first matching pickle and assert it contains a non-empty DataFrame-like object
         with open(os.path.join(self.sc.pickle_dir, pickles[0]), "rb") as fh:
@@ -714,4 +729,5 @@ class TestQuickQuantificationAndColocalization(unittest.TestCase):
         # call save_antigen_combinations with invalid type
         with self.assertRaises(ValueError):
             self.sc.save_antigen_combinations(
-                result_type="invalid", masking_mode="tile-level")
+                result_type="invalid", masking_mode="tile-level"
+            )

@@ -52,18 +52,14 @@ def register_slides(
     if not isinstance(microregistration, bool):
         raise ValueError("microregistration must be a boolean")
     if not isinstance(max_non_rigid_registration_dim_px, int):
-        raise ValueError(
-            "max_non_rigid_registartion_dim_px must be an integer")
+        raise ValueError("max_non_rigid_registration_dim_px must be an integer")
     if not isinstance(crop, str):
         raise ValueError("crop must be a string")
     if crop not in [CROP_OVERLAP, CROP_REFERENCE, None]:
-        raise ValueError(
-            f"crop must be one of {CROP_OVERLAP} or {CROP_REFERENCE}"
-        )
+        raise ValueError(f"crop must be one of {CROP_OVERLAP} or {CROP_REFERENCE}")
 
     if registered_slides_dst is None:
-        registered_slides_dst = os.path.join(
-            results_dst_dir, "registered_slides")
+        registered_slides_dst = os.path.join(results_dst_dir, "registered_slides")
 
     if crop is None:
         crop = CROP_OVERLAP
@@ -74,10 +70,10 @@ def register_slides(
     # Micro registration
     if microregistration:
         registrar.register_micro(
-            max_non_rigid_registartion_dim_px=max_non_rigid_registration_dim_px
+            max_non_rigid_registration_dim_px=max_non_rigid_registration_dim_px
         )
     # Save registered slides
-    registrar.warp_and_save_slides(registered_slides_dst, crop=crop)
+    registrar.warp_and_save_slides(registered_slides_dst, crop=crop, tile_wh=1024)
     registration.kill_jvm()
 
 
@@ -88,7 +84,7 @@ def register_slides_with_reference(
     registered_slides_dst=None,
     microregistration=False,
     max_non_rigid_registration_dim_px=DEFAULT_MAX_NON_RIGID_REG_SIZE,
-    crop=None
+    crop=None,
 ):
     """
     Register the slides with a reference slide using Valis. This function automatically registers the slides and saves
@@ -123,18 +119,19 @@ def register_slides_with_reference(
     if not isinstance(microregistration, bool):
         raise ValueError("microregistration must be a boolean")
     if not isinstance(max_non_rigid_registration_dim_px, int):
-        raise ValueError(
-            "max_non_rigid_registartion_dim_px must be an integer")
+        raise ValueError("max_non_rigid_registration_dim_px must be an integer")
 
     if registered_slides_dst is None:
-        registered_slides_dst = os.path.join(
-            results_dst_dir, "registered_slides")
+        registered_slides_dst = os.path.join(results_dst_dir, "registered_slides")
 
     if crop is None:
         crop = CROP_REFERENCE
 
     registrar = registration.Valis(
-        slide_src_dir, results_dst_dir, reference_img_f=referenceSlide
+        slide_src_dir,
+        results_dst_dir,
+        reference_img_f=referenceSlide,
+        align_to_reference=True,
     )
     rigid_registrar, non_rigid_registrar, error_df = registrar.register()
     if microregistration:
@@ -142,15 +139,15 @@ def register_slides_with_reference(
             max_non_rigid_registration_dim_px=max_non_rigid_registration_dim_px,
             align_to_reference=True,
         )
-    registrar.warp_and_save_slides(registered_slides_dst, crop=crop)
+    registrar.warp_and_save_slides(registered_slides_dst, crop=crop, tile_wh=1024)
     registration.kill_jvm()
 
 
 def register_slides_high_resolution(
-        slide_src_dir,
-        results_dst_dir,
-        registered_slides_dst=None,
-        micro_reg_fraction=None,
+    slide_src_dir,
+    results_dst_dir,
+    registered_slides_dst=None,
+    micro_reg_fraction=None,
 ):
     """
     Performs high resolution alignment.
@@ -158,8 +155,7 @@ def register_slides_high_resolution(
     # Perform high resolution rigid registration using the MicroRigidRegistrar
     start = time()
     if registered_slides_dst is None:
-        registered_slides_dst = os.path.join(
-            results_dst_dir, "registered_slides")
+        registered_slides_dst = os.path.join(results_dst_dir, "registered_slides")
     if micro_reg_fraction is None:
         micro_reg_fraction = 0.25
 
@@ -185,7 +181,8 @@ def register_slides_high_resolution(
         max_non_rigid_registration_dim_px=micro_reg_size
     )
     registrar.warp_and_save_slides(
-        registered_slides_dst, crop=CROP_OVERLAP)
+        registered_slides_dst, crop=CROP_OVERLAP, tile_wh=1024
+    )
     registration.kill_jvm()
     end = time()
     print(f"High-resolution alignement completed in {end-start:.2f} seconds")

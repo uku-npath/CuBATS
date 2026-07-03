@@ -27,7 +27,7 @@ from cubats.slide_collection.tile_colocalization import (
 # Constants
 # Destination directories
 RESULT_DATA_DIR = "data"
-REGISTRATION_DIR = "registration"
+REGISTRATION_DIR = "registration"  # registered_slides
 TILES_DIR = "tiles"
 COLOCALIZATION = "colocalization"
 ORIGINAL_TILES_DIR = "original"
@@ -327,7 +327,6 @@ class SlideCollection(object):
 
             path_antigen_profiles (str, optional): Path to antigen profiles. Definitions as .json or .csv are accepted.
                 If no default thresholds will be applied during processing.
-
         """
         # Logging
         logging.config.dictConfig(log_config.LOGGING)
@@ -360,8 +359,7 @@ class SlideCollection(object):
         self.slides = []
 
         # Slide informations
-        self.collection_info = pd.DataFrame(
-            columns=SLIDE_COLLECTION_COLUMN_NAMES)
+        self.collection_info = pd.DataFrame(columns=SLIDE_COLLECTION_COLUMN_NAMES)
 
         # Mask Variables
         self.mask = None
@@ -400,8 +398,6 @@ class SlideCollection(object):
 
         # Load previous results if exist
         self.load_previous_results()
-        # if not self.mask_coordinates:
-        #    self.extract_mask_tile_coordinates()
 
         if path_antigen_profiles is not None:
             self.add_antigen_profiles(path_antigen_profiles)
@@ -433,11 +429,8 @@ class SlideCollection(object):
 
         Returns:
             None
-
-            TODO: Check indexing of collection_info_df
         """
-        self.logger.info(
-            f"Initializing SlideCollection: {self.collection_name}")
+        self.logger.info(f"Initializing SlideCollection: {self.collection_name}")
         init_start_time = time()
         for file in os.listdir(self.src_dir):
             if os.path.isfile(os.path.join(self.src_dir, file)):
@@ -447,9 +440,9 @@ class SlideCollection(object):
                     mask = False
                     ref = False
                     # Look for mask and reference slide. If no reference selected HE slide will be selected
-                    # if re.search("_mask", filename):
-                    #    mask = True
-                    if re.search("HE", filename) or filename == self.reference_slide:
+                    if re.search("_mask", filename):
+                        mask = True
+                    elif re.search("HE", filename) or filename == self.reference_slide:
                         ref = True
 
                     slide = Slide(
@@ -464,8 +457,8 @@ class SlideCollection(object):
                     )
                     if ref and not self.reference_slide:
                         self.reference_slide = slide
-                    # elif mask:
-                    #    self.mask = slide
+                    elif mask:
+                        self.mask = slide
 
         self.collection_info.to_csv(
             os.path.join(self.data_dir, "collection_info.csv"),
@@ -500,7 +493,6 @@ class SlideCollection(object):
         Args:
             path (str, optional): Path to directory containing pickle files. Defaults to `pickle_dir` of the slide
                 collection.
-
         """
         prev_res_start_time = time()
         self.logger.debug("Searching for previous results")
@@ -529,8 +521,7 @@ class SlideCollection(object):
             if path is None:
                 path = self.pickle_dir
             path_mask_coord = os.path.join(path, "mask_coordinates.pickle")
-            path_quant_res = os.path.join(
-                path, "quantification_results.pickle")
+            path_quant_res = os.path.join(path, "quantification_results.pickle")
             path_dual_overlap_res = os.path.join(
                 path, "dual_antigen_expressions.pickle"
             )
@@ -540,8 +531,7 @@ class SlideCollection(object):
 
             # load mask coordinates
             if os.path.exists(path_mask_coord):
-                self.mask_coordinates = pickle.load(
-                    open(path_mask_coord, "rb"))
+                self.mask_coordinates = pickle.load(open(path_mask_coord, "rb"))
                 self.status["segmented"] = True
                 self.logger.info(
                     f"Successfully loaded mask coordinates for {self.collection_name}"
@@ -553,8 +543,7 @@ class SlideCollection(object):
 
             # load quantification results
             if os.path.exists(path_quant_res):
-                self.quantification_results = pickle.load(
-                    open(path_quant_res, "rb"))
+                self.quantification_results = pickle.load(open(path_quant_res, "rb"))
                 self.status["quantified"] = True
                 self.logger.info(
                     f"Sucessfully loaded quantification results for {self.collection_name}"
@@ -565,8 +554,7 @@ class SlideCollection(object):
                 )
 
             # load dual overlap results
-            self.logger.info(
-                "Searching for previous dual antigen expression results")
+            self.logger.info("Searching for previous dual antigen expression results")
             if os.path.exists(path_dual_overlap_res):
                 self.dual_antigen_expressions = pickle.load(
                     open(path_dual_overlap_res, "rb")
@@ -599,8 +587,7 @@ class SlideCollection(object):
 
             # Load processing info for each slide
             for slide in self.slides:
-                path_slide = os.path.join(
-                    path, f"{slide.name}_processing_info.pickle")
+                path_slide = os.path.join(path, f"{slide.name}_processing_info.pickle")
                 if os.path.exists(path_slide):
                     slide.detailed_quantification_results = pickle.load(
                         open(path_slide, "rb")
@@ -639,7 +626,6 @@ class SlideCollection(object):
 
         Args:
             dir (str): Path to directory the mask is in.
-
         """
         if not dir or not os.path.isdir(dir):
             self.logger.debug(
@@ -665,8 +651,7 @@ class SlideCollection(object):
                         self.mask = existing[0]
                     else:
                         try:
-                            new_mask = Slide(
-                                mask_name, mask_path, is_mask=True)
+                            new_mask = Slide(mask_name, mask_path, is_mask=True)
                             self.slides.append(new_mask)
                             try:
                                 self.collection_info.loc[len(self.collection_info)] = (
@@ -681,8 +666,8 @@ class SlideCollection(object):
                             self.logger.warning(
                                 f"Found mask Slide but failed to load it: {mask_path}: {e}"
                             )
-                    self.logger.info(
-                        f"Loaded mask slide from directory: {mask_path}")
+                    self.logger.info(f"Loaded mask slide from directory: {mask_path}")
+                    self.status["segmented"] = True
         except Exception as e:
             self.logger.debug(f"Error while scanning {dir} for mask: {e}")
 
@@ -697,7 +682,6 @@ class SlideCollection(object):
         Args:
             save_img (bool): Boolean to determine if mask tiles shall be saved as image. Necessary if mask shall be
                 reconstructed later on. Note: Storing tiles will require addition storage. Defaults to False.
-
         """
         # Create tiles directory if it does not exist
         if save_img:
@@ -707,7 +691,7 @@ class SlideCollection(object):
         # If no mask slide is provided, mask coordinates will contain all tiles of the slide.
         if self.mask is None:
             mask_start_time = time()
-            slide_tiles = self.slides[0].tiles
+            slide_tiles = self.reference_slide.tiles
             self.mask_coordinates.clear()
             cols, rows = slide_tiles.level_tiles[slide_tiles.level_count - 1]
             for col in tqdm(range(cols), desc="Extracting mask tiles"):
@@ -721,10 +705,9 @@ class SlideCollection(object):
             cols, rows = mask_tiles.level_tiles[mask_tiles.level_count - 1]
             for col in tqdm(range(cols), desc="Extracting mask tiles"):
                 for row in range(rows):
-                    temp = mask_tiles.get_tile(
-                        mask_tiles.level_count - 1, (col, row))
+                    temp = mask_tiles.get_tile(mask_tiles.level_count - 1, (col, row))
                     if temp.mode != "RGB":
-                        temp = temp.convert("RBG")
+                        temp = temp.convert("RGB")
                     temp = xp.array(temp)
                     mean = xp.mean(temp)
 
@@ -755,8 +738,7 @@ class SlideCollection(object):
         # Save mask coordinates as pickle
         out = os.path.join(self.pickle_dir, "mask_coordinates.pickle")
         with open(out, "wb") as file:
-            pickle.dump(self.mask_coordinates, file,
-                        protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.mask_coordinates, file, protocol=pickle.HIGHEST_PROTOCOL)
         # pickle.dump(self.mask_coordinates, open(out, "wb"))
         self.logger.debug(f"Successfully saved mask coordinates to {out}")
         self.logger.info("Finished Mask Tile Extraction")
@@ -809,13 +791,17 @@ class SlideCollection(object):
         os.makedirs(self.intermediate_registration_dir, exist_ok=True)
 
         if reference_slide:
-            self.logger.info(
-                f"Registering slides with reference slide {reference_slide}"
-            )
+            # Accept either a Slide object or a path string for reference_slide
+            if isinstance(reference_slide, Slide):
+                ref_path = reference_slide.orig_path
+            else:
+                ref_path = reference_slide
+            self.logger.info(f"Registering slides with reference slide {ref_path}")
             register_slides_with_reference(
                 slide_src_dir=self.src_dir,
                 results_dst_dir=self.intermediate_registration_dir,
-                referenceSlide=reference_slide,
+                registered_slides_dst=self.registration_dir,
+                referenceSlide=ref_path,
                 microregistration=microregistration,
                 max_non_rigid_registration_dim_px=max_non_rigid_registration_dim_px,
                 crop=crop,
@@ -826,7 +812,7 @@ class SlideCollection(object):
             )
             register_slides_high_resolution(
                 slide_src_dir=self.src_dir,
-                results_dst_dir=self.intermediate_registration_dir,
+                results_dst_dir=self.registration_dir,
                 registered_slides_dst=self.registration_dir,
                 micro_reg_fraction=high_res_fraction,
             )
@@ -1016,10 +1002,8 @@ class SlideCollection(object):
                 self.quantify_single_slide(slide.name, save_imgs, masking_mode)
                 c += 1
         end_quant_time = time()
-        self.logger.info(
-            f"Finished quantification for {self.collection_name} in \
-                {round((end_quant_time - start_quant_time)/60,2)} minutes."
-        )
+        self.logger.info(f"Finished quantification for {self.collection_name} in \
+                {round((end_quant_time - start_quant_time)/60,2)} minutes.")
         self.status["quantified"] = True
 
     def quantify_single_slide(
@@ -1062,16 +1046,14 @@ class SlideCollection(object):
             )
 
         if not self.mask_coordinates:
-            self.logger.info(
-                "Extracting mask coordinates before quantification")
+            self.logger.info("Extracting mask coordinates before quantification")
             self.extract_mask_tile_coordinates()
 
         slide = [slide for slide in self.slides if slide.name == slide_name][0]
 
         # Create directories for images if they are to be saved.
         if save_img:
-            dab_tile_dir = os.path.join(
-                self.tiles_dir, slide_name, DAB_TILE_DIR)
+            dab_tile_dir = os.path.join(self.tiles_dir, slide_name, DAB_TILE_DIR)
             if masking_mode == "pixel-level":
                 slide.quantify_slide(
                     self.mask_coordinates,
@@ -1143,17 +1125,14 @@ class SlideCollection(object):
                 index=False,
                 encoding="utf-8",
             )
-            out = os.path.join(
-                self.pickle_dir, "quantification_results.pickle")
+            out = os.path.join(self.pickle_dir, "quantification_results.pickle")
             with open(out, "wb") as file:
                 pickle.dump(
                     self.quantification_results, file, protocol=pickle.HIGHEST_PROTOCOL
                 )
             save_end_time = time()
-            self.logger.debug(
-                f"Successfully saved quantification results to {out} in \
-                    {round((save_end_time - save_start_time),2)} seconds"
-            )
+            self.logger.debug(f"Successfully saved quantification results to {out} in \
+                    {round((save_end_time - save_start_time),2)} seconds")
         else:
             self.logger.warning(
                 "No quantification results were found. Please call quantify_all_slides() to quantify all slides \
@@ -1189,8 +1168,7 @@ class SlideCollection(object):
 
         # Pass each combination to the compute_dual_antigen_combination method
         for combo in slide_combinations:
-            self.evaluate_antigen_pair(
-                combo[0], combo[1], masking_mode=masking_mode)
+            self.evaluate_antigen_pair(combo[0], combo[1], masking_mode=masking_mode)
         dual_expression_time_end = time()
         self.logger.info(
             f"Finished dual antigen expression analysis in \
@@ -1266,8 +1244,7 @@ class SlideCollection(object):
         # Create directory for pair of slides
         if save_img:
             # Create Colocalization directory if it does not exist
-            self.colocalization_dir = os.path.join(
-                self.dest_dir, COLOCALIZATION)
+            self.colocalization_dir = os.path.join(self.dest_dir, COLOCALIZATION)
             os.makedirs(self.colocalization_dir, exist_ok=True)
 
             # Create sub-directory for slide pair
@@ -1335,8 +1312,7 @@ class SlideCollection(object):
             [slide1.name, slide2.name],
             antigen_profiles=[slide1.antigen_profile, slide2.antigen_profile],
         )
-        self.save_antigen_combinations(
-            result_type="dual", masking_mode=masking_mode)
+        self.save_antigen_combinations(result_type="dual", masking_mode=masking_mode)
 
     def evaluate_antigen_triplet(
         self, slide1, slide2, slide3, save_img=False, masking_mode="tile-level"
@@ -1370,8 +1346,7 @@ class SlideCollection(object):
         # Create directory for triplet of slides
         if save_img:
             # Create Colocalization directory if it does not exist
-            self.colocalization_dir = os.path.join(
-                self.dest_dir, COLOCALIZATION)
+            self.colocalization_dir = os.path.join(self.dest_dir, COLOCALIZATION)
             os.makedirs(self.colocalization_dir, exist_ok=True)
 
             # Create sub-directory for slide triplet
@@ -1451,8 +1426,7 @@ class SlideCollection(object):
                 slide3.antigen_profile,
             ],
         )
-        self.save_antigen_combinations(
-            result_type="triplet", masking_mode=masking_mode)
+        self.save_antigen_combinations(result_type="triplet", masking_mode=masking_mode)
 
     def summarize_antigen_combinations(
         self, comparison_dict, slide_names, antigen_profiles
@@ -1467,19 +1441,19 @@ class SlideCollection(object):
             - antigen_profiles (list): List of all antigen profiles of the slides in the combination.
         """
         processed_tiles = 0
-        sum_total_coverage = 0.00
-        sum_total_overlap = 0.00
-        sum_total_complement = 0.00
-        sum_high_overlap = 0.00
-        sum_high_complement = 0.00
-        sum_pos_overlap = 0.00
-        sum_pos_complement = 0.00
-        sum_low_overlap = 0.00
-        sum_low_complement = 0.00
-        sum_negative = 0.00
-        sum_tissue = 0.00
-        sum_background = 0.00
-        sum_mask = 0.00
+        sum_total_coverage_weighted = 0.00
+        sum_total_overlap_weighted = 0.00
+        sum_total_complement_weighted = 0.00
+        sum_high_overlap_weighted = 0.00
+        sum_high_complement_weighted = 0.00
+        sum_pos_overlap_weighted = 0.00
+        sum_pos_complement_weighted = 0.00
+        sum_low_overlap_weighted = 0.00
+        sum_low_complement_weighted = 0.00
+        sum_negative_weighted = 0.00
+        sum_tissue_weighted = 0.00
+        sum_background_weighted = 0.00
+        sum_mask_area = 0.00
         sum_non_mask = 0.00
         error1 = 0
         error2 = 0
@@ -1487,39 +1461,76 @@ class SlideCollection(object):
         for i in comparison_dict:
             if comparison_dict[i]["Flag"] == 1:
                 processed_tiles += 1
-                sum_total_coverage += comparison_dict[i]["Total Coverage"]
-                sum_total_overlap += comparison_dict[i]["Total Overlap"]
-                sum_total_complement += comparison_dict[i]["Total Complement"]
-                sum_high_overlap += comparison_dict[i]["High Positive Overlap"]
-                sum_high_complement += comparison_dict[i]["High Positive Complement"]
-                sum_pos_overlap += comparison_dict[i]["Medium Positive Overlap"]
-                sum_pos_complement += comparison_dict[i]["Medium Positive Complement"]
-                sum_low_overlap += comparison_dict[i]["Low Positive Overlap"]
-                sum_low_complement += comparison_dict[i]["Low Positive Complement"]
-                sum_negative += comparison_dict[i]["Negative"]
-                sum_tissue += comparison_dict[i]["Tissue"]
-                sum_background += comparison_dict[i]["Background / No Tissue"]
-                sum_mask += comparison_dict[i]["Mask Area"]
+                tile_mask_pixels = comparison_dict[i]["Mask Area"] / 100 * 1048576
+                sum_mask_area += tile_mask_pixels
+                sum_total_coverage_weighted += (
+                    comparison_dict[i]["Total Coverage"] / 100 * tile_mask_pixels
+                )
+                sum_total_overlap_weighted += (
+                    comparison_dict[i]["Total Overlap"] / 100 * tile_mask_pixels
+                )
+                sum_total_complement_weighted += (
+                    comparison_dict[i]["Total Complement"] / 100 * tile_mask_pixels
+                )
+                sum_high_overlap_weighted += (
+                    comparison_dict[i]["High Positive Overlap"] / 100 * tile_mask_pixels
+                )
+                sum_high_complement_weighted += (
+                    comparison_dict[i]["High Positive Complement"]
+                    / 100
+                    * tile_mask_pixels
+                )
+                sum_pos_overlap_weighted += (
+                    comparison_dict[i]["Medium Positive Overlap"]
+                    / 100
+                    * tile_mask_pixels
+                )
+                sum_pos_complement_weighted += (
+                    comparison_dict[i]["Medium Positive Complement"]
+                    / 100
+                    * tile_mask_pixels
+                )
+                sum_low_overlap_weighted += (
+                    comparison_dict[i]["Low Positive Overlap"] / 100 * tile_mask_pixels
+                )
+                sum_low_complement_weighted += (
+                    comparison_dict[i]["Low Positive Complement"]
+                    / 100
+                    * tile_mask_pixels
+                )
+                sum_negative_weighted += (
+                    comparison_dict[i]["Negative"] / 100 * tile_mask_pixels
+                )
+                sum_tissue_weighted += (
+                    comparison_dict[i]["Tissue"] / 100 * tile_mask_pixels
+                )
+                sum_background_weighted += (
+                    comparison_dict[i]["Background / No Tissue"]
+                    / 100
+                    * tile_mask_pixels
+                )
                 sum_non_mask += comparison_dict[i]["Non-mask Area"]
             elif comparison_dict[i].get("Flag") == -1:
                 error1 += 1
             elif comparison_dict[i].get("Flag") == -2:
                 error2 += 1
 
-        if processed_tiles > 0:
-            sum_total_coverage /= processed_tiles
-            sum_total_overlap /= processed_tiles
-            sum_total_complement /= processed_tiles
-            sum_high_overlap /= processed_tiles
-            sum_high_complement /= processed_tiles
-            sum_pos_overlap /= processed_tiles
-            sum_pos_complement /= processed_tiles
-            sum_low_overlap /= processed_tiles
-            sum_low_complement /= processed_tiles
-            sum_negative /= processed_tiles
-            sum_tissue /= processed_tiles
-            sum_background /= processed_tiles
-            sum_mask /= processed_tiles
+        if processed_tiles > 0 and sum_mask_area > 0:
+            sum_total_coverage = sum_total_coverage_weighted / sum_mask_area * 100
+            sum_total_overlap = sum_total_overlap_weighted / sum_mask_area * 100
+            sum_total_complement = sum_total_complement_weighted / sum_mask_area * 100
+            sum_high_overlap = sum_high_overlap_weighted / sum_mask_area * 100
+            sum_high_complement = sum_high_complement_weighted / sum_mask_area * 100
+            sum_pos_overlap = sum_pos_overlap_weighted / sum_mask_area * 100
+            sum_pos_complement = sum_pos_complement_weighted / sum_mask_area * 100
+            sum_low_overlap = sum_low_overlap_weighted / sum_mask_area * 100
+            sum_low_complement = sum_low_complement_weighted / sum_mask_area * 100
+            sum_negative = sum_negative_weighted / sum_mask_area * 100
+            sum_tissue = sum_tissue_weighted / sum_mask_area * 100
+            sum_background = sum_background_weighted / sum_mask_area * 100
+            sum_mask = (
+                sum_mask_area / (processed_tiles * 1048576) * 100
+            )  # average mask %
             sum_non_mask /= processed_tiles
         else:
             sum_total_coverage = 0
@@ -1587,9 +1598,9 @@ class SlideCollection(object):
         )
         if len(antigen_profiles) == 3:
             overlap_dict["Thresholds3"] = [
-                antigen_profiles[1]["high_positive_threshold"],
-                antigen_profiles[1]["medium_positive_threshold"],
-                antigen_profiles[1]["low_positive_threshold"],
+                antigen_profiles[2]["high_positive_threshold"],
+                antigen_profiles[2]["medium_positive_threshold"],
+                antigen_profiles[2]["low_positive_threshold"],
                 235,
             ]
 
@@ -1628,8 +1639,7 @@ class SlideCollection(object):
             csv_filename = f"{masking_mode}_triplet_antigen_expressions.csv"
             pickle_filename = "triplet_antigen_expressions.pickle"
         else:
-            raise ValueError(
-                "Invalid result_type. Must be 'dual' or 'triplet'.")
+            raise ValueError("Invalid result_type. Must be 'dual' or 'triplet'.")
 
         # Save results as CSV
         summary_df.to_csv(
