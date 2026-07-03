@@ -175,5 +175,13 @@ examples/script1.py
 examples/script.py
 src/cubats/Main.ipynb
 
+
 # VSCode
 .vscode/
+examples/cubats_script_test.py
+.gitignore
+examples/organoid_eval.ipynb
+examples/cubats_script.py
+examples/organoid_script.py
+examples/base_example.ipynb
+cupy_cache/
