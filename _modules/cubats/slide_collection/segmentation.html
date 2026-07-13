@@ -274,7 +274,8 @@
 
     <span class="n">end_time_segmentation</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;Segmentation of </span><span class="si">{</span><span class="n">input_path</span><span class="si">}</span><span class="s2"> completed in </span><span class="si">{</span><span class="p">(</span><span class="n">end_time_segmentation</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start_time_segmentation</span><span class="p">)</span><span class="o">/</span><span class="mi">60</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> Minutes.&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;Segmentation of </span><span class="si">{</span><span class="n">input_path</span><span class="si">}</span><span class="s2"> completed in&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="p">(</span><span class="n">end_time_segmentation</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start_time_segmentation</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">60</span><span class="si">:</span><span class="s2"> .2f</span><span class="si">}</span><span class="s2"> Minutes.&quot;</span>
     <span class="p">)</span></div>
 
 
@@ -659,7 +660,7 @@
     <span class="n">combined</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="n">png_name</span><span class="p">))</span>
 
     <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Thumbnail creation took </span><span class="si">{</span><span class="n">end_time</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start_time</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds.&quot;</span><span class="p">)</span></div>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Thumbnail creation took </span><span class="si">{</span><span class="n">end_time</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start_time</span><span class="si">:</span><span class="s2"> .2f</span><span class="si">}</span><span class="s2"> seconds.&quot;</span><span class="p">)</span></div>
 
 </pre></div>
 

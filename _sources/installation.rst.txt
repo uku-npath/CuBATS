@@ -4,7 +4,7 @@ Installation
 ************
 
 .. note::
-    CuBATS currently requires Python 3.10 to 3.11.
+    CuBATS currently requires Python 3.10 to 3.12.
 
 Pip Install
 ===========
@@ -26,7 +26,7 @@ On Windows:
 
 .. code-block:: bash
 
-    $ conda create -n cubats-env python=3.10
+    $ conda create -n cubats-env python=3.12
     $ conda activate cubats-env
     $ pip install cubats
 
