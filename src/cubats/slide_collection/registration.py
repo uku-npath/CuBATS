@@ -185,4 +185,4 @@ def register_slides_high_resolution(
     )
     registration.kill_jvm()
     end = time()
-    print(f"High-resolution alignement completed in {end-start:.2f} seconds")
+    print(f"High-resolution alignement completed in {end - start: .2f} seconds")

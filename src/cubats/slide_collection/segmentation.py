@@ -191,7 +191,8 @@ def run_tumor_segmentation(
 
     end_time_segmentation = time()
     logger.info(
-        f"Segmentation of {input_path} completed in {(end_time_segmentation - start_time_segmentation)/60:.2f} Minutes."
+        f"Segmentation of {input_path} completed in"
+        f"{(end_time_segmentation - start_time_segmentation) / 60: .2f} Minutes."
     )
 
 
@@ -567,4 +568,4 @@ def _plot_segmentation_on_tissue(file_path, output_path):
     combined.save(path.join(output_path, png_name))
 
     end_time = time()
-    logger.debug(f"Thumbnail creation took {end_time - start_time:.2f} seconds.")
+    logger.debug(f"Thumbnail creation took {end_time - start_time: .2f} seconds.")

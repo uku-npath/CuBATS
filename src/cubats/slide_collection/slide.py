@@ -238,12 +238,12 @@ class Slide(object):
         if end_time_preprocessing - start_time_preprocessing >= 60:
             self.logger.info(
                 f"Finished pre-processing slide: {self.name} in \
-                    {round((end_time_preprocessing - start_time_preprocessing)/60,2)} minutes."
+                    {round((end_time_preprocessing - start_time_preprocessing) / 60, 2)} minutes."
             )
         else:
             self.logger.info(
                 f"Finished pre-processing slide: {self.name} in \
-                    {round((end_time_preprocessing - start_time_preprocessing),2)} seconds."
+                    {round((end_time_preprocessing - start_time_preprocessing), 2)} seconds."
             )
 
         start_time_quantification = time()
@@ -264,12 +264,12 @@ class Slide(object):
         if end_time_quantification - start_time_quantification >= 60:
             self.logger.info(
                 f"Finished quantifying slide: {self.name} in \
-                    {round((end_time_quantification - start_time_quantification)/60,2)} minutes."
+                    {round((end_time_quantification - start_time_quantification) / 60, 2)} minutes."
             )
         else:
             self.logger.info(
                 f"Finished quantifying slide: {self.name} in \
-                    {round((end_time_quantification - start_time_quantification),2)} seconds."
+                    {round((end_time_quantification - start_time_quantification), 2)} seconds."
             )
 
         # Retrieve Quantification results and save to disk
@@ -289,7 +289,7 @@ class Slide(object):
         end_time_save = time()
         self.logger.debug(
             f"Saved quantification results for {self.name} to {f_out} in \
-                {round((end_time_save - start_time_save)/60,2)} minutes."
+                {round((end_time_save - start_time_save) / 60, 2)} minutes."
         )
         self.logger.info(f"Finished processing slide: {self.name}")
 
@@ -472,7 +472,7 @@ class Slide(object):
         end_time_summarize = time()
         self.logger.debug(
             f"Finished summarizing quantification results for slide: {self.name} in \
-                {round((end_time_summarize - start_time_summarize)/60,2)} minutes."
+                {round((end_time_summarize - start_time_summarize) / 60, 2)} minutes."
         )
 
     def reconstruct_slide(self, in_path, out_path):
@@ -528,7 +528,7 @@ class Slide(object):
             segmented_wsi).cast(BandFormat.INT)
         end_time = time()
         self.logger.info(
-            f"Finished reconstructing slide: {self.name} in {round((end_time - start_time)/60,2)} minutes."
+            f"Finished reconstructing slide: {self.name} in {round((end_time - start_time) / 60, 2)} minutes."
         )
 
         start_time_save = time()
@@ -550,7 +550,7 @@ class Slide(object):
         )
         end_time_save = time()
         self.logger.debug(
-            f"Saved reconstructed slide to {out} in {round((end_time_save - start_time_save)/60,2)} minutes."
+            f"Saved reconstructed slide to {out} in {round((end_time_save - start_time_save) / 60, 2)} minutes."
         )
 
     def update_slide(self, new_path):

@@ -471,7 +471,7 @@ class SlideCollection(object):
 
         init_end_time = time()
         self.logger.debug(
-            f"Slide collection initialized in {round((init_end_time - init_start_time),2)} seconds"
+            f"Slide collection initialized in {round((init_end_time - init_start_time), 2)} seconds"
         )
 
     def load_previous_results(self, path=None):
@@ -618,7 +618,7 @@ class SlideCollection(object):
         prev_res_end_time = time()
         self.logger.info(
             f"Finished loading previous results for {self.collection_name} in \
-                {round((prev_res_end_time - prev_res_start_time), 2 )} seconds"
+                {round((prev_res_end_time - prev_res_start_time), 2)} seconds"
         )
 
     def add_mask_to_collection(self, dir):
@@ -732,7 +732,7 @@ class SlideCollection(object):
                         pass
         mask_end_time = time()
         self.logger.debug(
-            f"Mask coordinates generated in {round((mask_end_time - mask_start_time)/60,2)} minutes"
+            f"Mask coordinates generated in {round((mask_end_time - mask_start_time) / 60, 2)} minutes"
         )
 
         # Save mask coordinates as pickle
@@ -831,7 +831,7 @@ class SlideCollection(object):
         self.status["registered"] = True
         self.logger.info(
             f"Finished image registration of {self.collection_name} in \
-                {round((registration_end_time - registration_begin_time)/60,2)} minutes."
+                {round((registration_end_time - registration_begin_time) / 60, 2)} minutes."
         )
         self.logger.info(f"Updating slide paths for {self.collection_name}")
         self._update_slide_paths_after_registration()
@@ -1003,7 +1003,7 @@ class SlideCollection(object):
                 c += 1
         end_quant_time = time()
         self.logger.info(f"Finished quantification for {self.collection_name} in \
-                {round((end_quant_time - start_quant_time)/60,2)} minutes.")
+                {round((end_quant_time - start_quant_time) / 60, 2)} minutes.")
         self.status["quantified"] = True
 
     def quantify_single_slide(
@@ -1132,7 +1132,7 @@ class SlideCollection(object):
                 )
             save_end_time = time()
             self.logger.debug(f"Successfully saved quantification results to {out} in \
-                    {round((save_end_time - save_start_time),2)} seconds")
+                    {round((save_end_time - save_start_time), 2)} seconds")
         else:
             self.logger.warning(
                 "No quantification results were found. Please call quantify_all_slides() to quantify all slides \
@@ -1172,7 +1172,7 @@ class SlideCollection(object):
         dual_expression_time_end = time()
         self.logger.info(
             f"Finished dual antigen expression analysis in \
-                {round((dual_expression_time_end - dual_expression_time_start)/60,2)} minutes."
+                {round((dual_expression_time_end - dual_expression_time_start) / 60, 2)} minutes."
         )
         self.status["dual_antigen_expression"] = True
 
@@ -1211,7 +1211,7 @@ class SlideCollection(object):
         triplet_expression_time_end = time()
         self.logger.info(
             f"Finished triplet antigen expression analysis in \
-                {round((triplet_expression_time_end - triplet_expression_time_start)/60,2)} minutes."
+                {round((triplet_expression_time_end - triplet_expression_time_start) / 60, 2)} minutes."
         )
         self.status["triplet_antigen_expression"] = True
 
@@ -1300,7 +1300,7 @@ class SlideCollection(object):
         if end_time - start_time >= 60:
             self.logger.debug(
                 f"Finished antigen analysis for: {slide1.name} & {slide2.name} in \
-                    {round((end_time - start_time)/60,2)} minutes."
+                    {round((end_time - start_time) / 60, 2)} minutes."
             )
         else:
             self.logger.debug(
@@ -1410,7 +1410,7 @@ class SlideCollection(object):
         if end_time - start_time >= 60:
             self.logger.debug(
                 f"Finished antigen analysis for: {slide1.name} & {slide2.name} & {slide3.name} in \
-                    {round((end_time - start_time)/60, 2)} minutes."
+                    {round((end_time - start_time) / 60, 2)} minutes."
             )
         else:
             self.logger.debug(

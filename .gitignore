@@ -185,3 +185,4 @@ examples/cubats_script.py
 examples/organoid_script.py
 examples/base_example.ipynb
 cupy_cache/
+.python-version
