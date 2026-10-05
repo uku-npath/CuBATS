@@ -4,8 +4,8 @@
 [metadata]
 groups = ["default", "dev", "docs", "testing"]
 strategy = ["inherit_metadata"]
-lock_version = "4.5.0"
-content_hash = "sha256:1be8b016b56d999630822214b347f0ab0b63b8acfa67610e566839c93a281253"
+lock_version = "4.5.1"
+content_hash = "sha256:64d5d14b2de53cbcb397877fde09d48f80f70b38a5ea974f9a6e831f810aaead"
 
 [[metadata.targets]]
 requires_python = ">=3.10,<3.13"
@@ -716,7 +716,7 @@ version = "13.6.0"
 requires_python = ">=3.9"
 summary = "CuPy: NumPy & SciPy for GPU"
 groups = ["default"]
-marker = "sys_platform == \"win32\""
+marker = "sys_platform == \"win32\" or sys_platform == \"linux\" and platform_machine == \"x86_64\""
 dependencies = [
     "fastrlock>=0.5",
     "numpy<2.6,>=1.22",
@@ -913,7 +913,7 @@ name = "fastrlock"
 version = "0.8.3"
 summary = "Fast, re-entrant optimistic lock implemented in Cython"
 groups = ["default"]
-marker = "sys_platform == \"win32\""
+marker = "sys_platform == \"win32\" or sys_platform == \"linux\" and platform_machine == \"x86_64\""
 files = [
     {file = "fastrlock-0.8.3-cp310-cp310-macosx_11_0_universal2.whl", hash = "sha256:cc5fa9166e05409f64a804d5b6d01af670979cdb12cd2594f555cb33cdc155bd"},
     {file = "fastrlock-0.8.3-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_24_aarch64.whl", hash = "sha256:7a77ebb0a24535ef4f167da2c5ee35d9be1e96ae192137e9dc3ff75b8dfc08a5"},
@@ -972,7 +972,7 @@ name = "flatbuffers"
 version = "25.12.19"
 summary = "The FlatBuffers serialization format for Python"
 groups = ["default"]
-marker = "sys_platform == \"win32\""
+marker = "sys_platform == \"win32\" or sys_platform == \"linux\" and platform_machine == \"x86_64\""
 files = [
     {file = "flatbuffers-25.12.19-py2.py3-none-any.whl", hash = "sha256:7634f50c427838bb021c2d66a3d1168e9d199b0607e6329399f04846d42e20b4"},
 ]
@@ -2588,7 +2588,7 @@ version = "1.24.3"
 requires_python = ">=3.10"
 summary = "ONNX Runtime is a runtime accelerator for Machine Learning models"
 groups = ["default"]
-marker = "sys_platform == \"win32\""
+marker = "sys_platform == \"win32\" or sys_platform == \"linux\" and platform_machine == \"x86_64\""
 dependencies = [
     "flatbuffers",
     "numpy>=1.21.6",
