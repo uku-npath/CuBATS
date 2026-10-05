@@ -7,7 +7,6 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 # Third Party
-import numpy as np
 from PIL import Image as PILImage
 
 # CuBATS
@@ -66,23 +65,20 @@ class TestSlideQuantify(unittest.TestCase):
             "Mask Count": 1024,  # > 0 to avoid division by zero
         }
 
-        # Patch mask_tile to be a simple passthrough (it will be invoked when building iterable if mask provided)
-        with patch("cubats.slide_collection.slide.mask_tile", side_effect=lambda t, m: (t, m)):
-            # Patch ProcessPoolExecutor so map returns our fake_tile_result iterator
-            with patch("concurrent.futures.ProcessPoolExecutor") as MockExec:
-                mock_executor = MockExec.return_value.__enter__.return_value
-                mock_executor.map.return_value = iter([fake_tile_result])
+        # Patch ProcessPoolExecutor so map returns our fake_tile_result iterator
+        with patch("concurrent.futures.ProcessPoolExecutor") as MockExec:
+            mock_executor = MockExec.return_value.__enter__.return_value
+            mock_executor.map.return_value = iter([fake_tile_result])
 
-                # run quantify_slide for one tile coordinate
-                coords = [(0, 0)]
-                s.quantify_slide(coords, save_dir=self.dst, save_img=False)
+            # run quantify_slide for one tile coordinate
+            coords = [(0, 0)]
+            s.quantify_slide(coords, save_dir=self.dst, save_img=False)
 
         # assert pickle file exists and contains the same dict
         out_pickle = os.path.join(self.dst, f"{s.name}_processing_info.pickle")
         self.assertTrue(os.path.exists(out_pickle))
         with open(out_pickle, "rb") as fh:
             loaded = pickle.load(fh)
-        # the saved pickle should be a dict mapping indices to results and match slide.detailed_quantification_results
         self.assertEqual(loaded, s.detailed_quantification_results)
         self.assertIn("Name", s.quantification_summary)
         self.assertEqual(s.quantification_summary["Name"], s.name)
@@ -95,13 +91,12 @@ class TestSlideQuantify(unittest.TestCase):
             "Mask Count": 512,
         }
         img_dir = os.path.join(self.dst, "tiles_out")
-        with patch("cubats.slide_collection.slide.mask_tile", side_effect=lambda t, m: (t, m)):
-            with patch("concurrent.futures.ProcessPoolExecutor") as MockExec:
-                mock_executor = MockExec.return_value.__enter__.return_value
-                mock_executor.map.return_value = iter([fake_tile_result])
+        with patch("concurrent.futures.ProcessPoolExecutor") as MockExec:
+            mock_executor = MockExec.return_value.__enter__.return_value
+            mock_executor.map.return_value = iter([fake_tile_result])
 
-                s.quantify_slide([(0, 0)], save_dir=self.dst,
-                                 save_img=True, img_dir=img_dir)
+            s.quantify_slide([(0, 0)], save_dir=self.dst,
+                             save_img=True, img_dir=img_dir)
 
         # dab_tile_dir should be set and directory exists
         self.assertEqual(s.dab_tile_dir, img_dir)
@@ -149,47 +144,25 @@ class TestSlideReconstruct(unittest.TestCase):
             self.slide.reconstruct_slide(empty_dir, self.out)
 
     def test_reconstruct_slide_success_calls_vips_and_saves(self):
-        # Prepare tiles directory with one tile (0_0.tif). leave other tiles missing to exercise fallback.
+        # One real tile on disk (0_0.tif); the rest are missing to exercise the placeholder path
         tiles_dir = os.path.join(self.tmp.name, "tiles")
         os.makedirs(tiles_dir, exist_ok=True)
+        PILImage.new("RGB", (8, 8), (10, 20, 30)).save(os.path.join(tiles_dir, "0_0.tif"))
 
-        # Save one small tif tile file that reconstruct_slide will pick up
-        tile_path = os.path.join(tiles_dir, "0_0.tif")
-        PILImage.new("RGB", (8, 8), (10, 20, 30)).save(tile_path)
-
-        # Patch np.concatenate to avoid operating on PIL images and to return deterministic arrays
-        # First call (per-row concatenation) -> small array, second call (rows -> whole) -> small array
-        concat_side_effects = [
-            np.zeros((8, 16, 3), dtype=np.uint8),
-            np.zeros((16, 16, 3), dtype=np.uint8),
-        ]
-
-        # Patch VipsImage.new_from_array chain so we don't require pyvips to write real TIFF
-        with patch("cubats.slide_collection.slide.np.concatenate") as mock_concat, patch(
-            "cubats.slide_collection.slide.VipsImage.new_from_array"
-        ) as mock_new_from_array:
-            mock_concat.side_effect = concat_side_effects
-            # build a chainable mock: new_from_array().cast().crop().tiffsave()
-            mock_vips = MagicMock()
-            mock_cast = MagicMock()
-            mock_crop = MagicMock()
-            mock_tiffsave = MagicMock()
-            mock_crop.tiffsave = mock_tiffsave
-            mock_cast.crop.return_value = mock_crop
-            mock_vips.cast.return_value = mock_cast
-            mock_new_from_array.return_value = mock_vips
+        with patch("cubats.slide_collection.slide.VipsImage") as mock_vips_cls:
+            # new pipeline: arrayjoin(...).copy(...) -> wsi -> wsi.crop(...) -> cropped.tiffsave(...)
+            wsi = MagicMock(width=16, height=16)   # real ints: the code does min(width, wsi.width)
+            cropped = MagicMock()
+            wsi.crop.return_value = cropped
+            mock_vips_cls.arrayjoin.return_value.copy.return_value = wsi
 
             out_dir = os.path.join(self.out, "reconst_out")
-            # call reconstruct_slide - should not raise
             self.slide.reconstruct_slide(tiles_dir, out_dir)
 
-            # assertions: vips pipeline invoked and tiffsave called once
-            mock_new_from_array.assert_called()
-            mock_vips.cast.assert_called()
-            mock_cast.crop.assert_called_once()
-            mock_tiffsave.assert_called_once()
-
-            # file may not actually be written because tiffsave is mocked, but out dir should exist
+            mock_vips_cls.new_from_file.assert_called_once()   # only 0_0.tif exists
+            mock_vips_cls.arrayjoin.assert_called_once()
+            wsi.crop.assert_called_once()
+            cropped.tiffsave.assert_called_once()
             self.assertTrue(os.path.isdir(out_dir))
 
 

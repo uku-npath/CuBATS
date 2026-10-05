@@ -1,6 +1,7 @@
 # Standard Library
 import concurrent.futures
 import logging.config
+import multiprocessing as mp
 import os
 import pickle
 import re
@@ -877,6 +878,9 @@ class SlideCollection(object):
         normalization=False,
         inversion=False,
         plot_results=False,
+        batch_size=None,
+        num_workers=None,
+        gpu_ids=None,
     ):
         """Performs tumor segmentation on the HE WSI in the SlideCollection.
 
@@ -905,6 +909,12 @@ class SlideCollection(object):
             plot_results (bool, optional): Boolean determining if segmentation results shall be plotted onto the tissue.
                 Defaults to False.
 
+            batch_size (int, optional): Batch size for segmentation. Defaults to None.
+
+            num_workers (int, optional): Number of workers for segmentation. Defaults to None.
+
+            gpu_ids (list, optional): List of GPU IDs for segmentation. Defaults to None.
+
         Returns:
             None
         """
@@ -923,6 +933,9 @@ class SlideCollection(object):
             normalization,
             inversion,
             plot_results,
+            batch_size,
+            num_workers,
+            gpu_ids,
         )
         self.add_mask_to_collection(output_path)
         self.status["segmented"] = True
@@ -1051,36 +1064,30 @@ class SlideCollection(object):
 
         slide = [slide for slide in self.slides if slide.name == slide_name][0]
 
-        # Create directories for images if they are to be saved.
-        if save_img:
-            dab_tile_dir = os.path.join(self.tiles_dir, slide_name, DAB_TILE_DIR)
-            if masking_mode == "pixel-level":
-                slide.quantify_slide(
-                    self.mask_coordinates,
-                    self.pickle_dir,
-                    save_img,
-                    dab_tile_dir,
-                    mask=self.mask.tiles,
+        # Resolve mask path only for pixel-level masking
+        mask_path = None
+        if masking_mode == "pixel-level":
+            if self.mask is None:
+                raise RuntimeError(
+                    "Pixel-level masking requires a tumor mask. Please run tumor_segmentation() first."
                 )
-            elif masking_mode == "tile-level":
-                slide.quantify_slide(
-                    self.mask_coordinates,
-                    self.pickle_dir,
-                    save_img,
-                    dab_tile_dir,
-                )
-        else:
-            if masking_mode == "pixel-level":
-                slide.quantify_slide(
-                    self.mask_coordinates,
-                    self.pickle_dir,
-                    mask=self.mask.tiles,
-                )
-            elif masking_mode == "tile-level":
-                slide.quantify_slide(
-                    self.mask_coordinates,
-                    self.pickle_dir,
-                )
+            mask_path = self.mask.orig_path or self.mask.registered_path
+            if not os.path.exists(mask_path):
+                raise FileNotFoundError(f"Mask file not found: {mask_path}")
+            self.logger.debug(f"Using mask path: {mask_path}")
+
+        # Directory for saved DAB tiles (only if tiles should be saved)
+        dab_tile_dir = (
+            os.path.join(self.tiles_dir, slide_name, DAB_TILE_DIR) if save_img else None
+        )
+
+        slide.quantify_slide(
+            self.mask_coordinates,
+            self.pickle_dir,
+            save_img=save_img,
+            img_dir=dab_tile_dir,
+            mask_path=mask_path,
+        )
 
         # slide_summary_series = pd.Series(slide.quantification_summary)
         slide_name_summary = slide.quantification_summary["Name"]
@@ -1139,7 +1146,7 @@ class SlideCollection(object):
                     in this slide collection or call quantify_single_slide() to quantify a single slide."
             )
 
-    def generate_antigen_pair_combinations(self, masking_mode="tile-level"):
+    def generate_antigen_pair_combinations(self, masking_mode="tile-level", save_img=False):
         """Creates all possible antigen pairs and analyzes antigen co-expression for all pairs. Results are stored
         in `dual_antigen_expressions`.
 
@@ -1151,6 +1158,9 @@ class SlideCollection(object):
 
                 - `pixel-level`: Applies the mask precisely at pixel level - only masked pixels are included.
                    Offers finer co-expression evaluation, but is more sensitive to registration errors.
+
+                - `save_img` (bool): Boolean determining if tiles shall be saved during processing. Necessary if slide
+                    shall be reconstructed later on. However, will require additional storage. Defaults to False.
         """
         dual_expression_time_start = time()
         self.dual_antigen_expressions = pd.DataFrame(
@@ -1168,7 +1178,7 @@ class SlideCollection(object):
 
         # Pass each combination to the compute_dual_antigen_combination method
         for combo in slide_combinations:
-            self.evaluate_antigen_pair(combo[0], combo[1], masking_mode=masking_mode)
+            self.evaluate_antigen_pair(combo[0], combo[1], masking_mode=masking_mode, save_img=save_img)
         dual_expression_time_end = time()
         self.logger.info(
             f"Finished dual antigen expression analysis in \
@@ -1176,7 +1186,7 @@ class SlideCollection(object):
         )
         self.status["dual_antigen_expression"] = True
 
-    def generate_antigen_triplet_combinations(self, masking_mode="tile-level"):
+    def generate_antigen_triplet_combinations(self, masking_mode="tile-level", save_img=False):
         """Creates all possible antigen triplets and analyzes antigen co-expression for all triplets. Results are stored
         in `triplet_antigen_expressions`.
 
@@ -1188,6 +1198,9 @@ class SlideCollection(object):
 
                 - `pixel-level`: Applies the mask precisely at pixel level - only masked pixels are included.
                    Offers finer co-expression evaluation, but is more sensitive to registration errors.
+
+                - `save_img` (bool): Boolean determining if tiles shall be saved during processing. Necessary if slide
+                    shall be reconstructed later on. However, will require additional storage. Defaults to False.
         """
         triplet_expression_time_start = time()
         self.triplet_antigen_results = pd.DataFrame(
@@ -1206,7 +1219,7 @@ class SlideCollection(object):
         # Pass each combination to the compute_triplet_antigen_combinations method
         for combo in slide_combinations:
             self.evaluate_antigen_triplet(
-                combo[0], combo[1], combo[2], masking_mode=masking_mode
+                combo[0], combo[1], combo[2], masking_mode=masking_mode, save_img=save_img
             )
         triplet_expression_time_end = time()
         self.logger.info(
@@ -1230,8 +1243,8 @@ class SlideCollection(object):
 
             slide2 (Slide): Slide Object for slide 2.
 
-            save_img (bool):  Boolean determining if tiles shall be saved during processing. Necessary if slide shall be
-                reconstructed later on. However, storing images will require additional storage. Defaults to False.
+            save_img (bool):  Boolean determining if tiles shall be saved during processing. Necessary if slide shall
+                be reconstructed later on. However, storing images will require additional storage. Defaults to False.
 
             masking_mode (str): Determines the mode for mask application that was used for quantification.
 
@@ -1282,7 +1295,8 @@ class SlideCollection(object):
         # Init dict for results of each tile
         comparison_dict = {}
         max_workers = os.cpu_count() - 1
-        with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as exe:
+        mp_context = mp.get_context("spawn")  # Use 'spawn' context for multiprocessing
+        with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers, mp_context=mp_context) as exe:
             results = tqdm(
                 exe.map(
                     evaluate_antigen_pair_tile,
@@ -1331,8 +1345,8 @@ class SlideCollection(object):
 
             slide3 (Slide): Slide Object for slide 3.
 
-            save_img (bool):  Boolean determining if tiles shall be saved during processing. Necessary if slide shall be
-                reconstructed later on. However, storing images will require additional storage. Defaults to False.
+            save_img (bool):  Boolean determining if tiles shall be saved during processing. Necessary if slide shall
+                be reconstructed later on. However, storing images will require additional storage. Defaults to False.
 
             masking_mode (str): Determines the mode for mask application that was used for quantification.
 
@@ -1393,7 +1407,8 @@ class SlideCollection(object):
         comparison_dict = {}
         max_workers = os.cpu_count() - 1
         # Process tiles using multiprocessing
-        with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as exe:
+        mp_context = mp.get_context("spawn")  # Use 'spawn' context for multiprocessing
+        with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers, mp_context=mp_context) as exe:
             results = tqdm(
                 exe.map(evaluate_antigen_triplet_tile, iterable),
                 total=len(iterable),

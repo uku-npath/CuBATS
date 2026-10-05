@@ -1,24 +1,22 @@
 # Standard Library
 import concurrent.futures
 import logging
+import multiprocessing as mp
 import os
 import pickle
 from time import time
 
 # Third Party
-import numpy as np
 import openslide
 from openslide.deepzoom import DeepZoomGenerator
-from PIL import Image
-from pyvips import BandFormat
 from pyvips import Image as VipsImage
 from tqdm import tqdm
 
 # CuBATS
 import cubats.logging_config as log_config
 from cubats.config import xp
-from cubats.slide_collection.tile_quantification import (mask_tile,
-                                                         quantify_tile)
+from cubats.slide_collection.tile_quantification import (init_worker,
+                                                         quantify_tile_at)
 
 
 class Slide(object):
@@ -156,7 +154,7 @@ class Slide(object):
         save_dir,
         save_img=False,
         img_dir=None,
-        mask=None,
+        mask_path=None,
     ):
         """Quantifies staining intensities for masked tiles of this slide.
 
@@ -180,15 +178,14 @@ class Slide(object):
             img_dir (str, optional): Directory to save the tiles. Must be provided if tiles shall be saved. Defaults to
                 None.
 
-            mask (openslide.deepzoom.DeepZoomGenerator, optional): DeepZoomGenerator containing the detailed
-                mask. Defaults to None. Provides a more detailed mask for the quantification of the slide, however,
-                might result in larger inaccuracies for WSI with low congruence.
+            mask_path (str, optional): Path to the mask file. Defaults to None. Provides a more detailed mask for the
+                quantification of the slide, however, might result in larger inaccuracies for WSI with low congruence.
 
         """
         self.logger.debug(
             f"Quantifying slide: {self.name}, antigen_profile: "
             f"{self.antigen_profile['Name'] if self.antigen_profile else 'None'}, "
-            f"save_img: {save_img}, masking_mode: {'pixel-level' if mask is not None else 'tile-level'}"
+            f"save_img: {save_img}, masking_mode: {'pixel-level' if mask_path is not None else 'tile-level'}"
         )
         if self.is_mask:
             self.logger.error("Cannot quantify mask slide.")
@@ -197,7 +194,7 @@ class Slide(object):
             self.logger.error("Cannot quantify reference slide.")
             raise ValueError("Cannot quantify reference slide.")
 
-        # masking_mode = "pixel-level" if mask is not None else "tile-level"
+        # masking_mode = "pixel-level" if mask_path is not None else "tile-level"
 
         # Create directory to save tiles if save_img is True
         if save_img:
@@ -209,58 +206,28 @@ class Slide(object):
             self.dab_tile_dir = img_dir
             os.makedirs(self.dab_tile_dir, exist_ok=True)
 
-        start_time_preprocessing = time()
-        # Creates an iterable containing xy-Tuples for each tile, DeepZoomGenerator, and directory.
-        iterable = [
-            (
-                x,
-                y,
-                (
-                    mask_tile(
-                        self.tiles.get_tile(self.level_count - 1, (x, y)),
-                        mask.get_tile(self.level_count - 1, (x, y)),
-                    )
-                    if mask is not None
-                    else (self.tiles.get_tile(self.level_count - 1, (x, y)), None)
-                ),
+        start_time_quantification = time()
+        max_workers = os.cpu_count() - 1
+        mp_context = mp.get_context("spawn")
+        with concurrent.futures.ProcessPoolExecutor(
+            max_workers=max_workers,
+            mp_context=mp_context,
+            initializer=init_worker,
+            initargs=(
+                self.registered_path or self.orig_path,
+                mask_path,
+                self.level_count - 1,
                 self.dab_tile_dir,
                 save_img,
                 self.antigen_profile,
-                # masking_mode,
-            )
-            for x, y in tqdm(
-                mask_coordinates,
-                desc="Pre-processing slide: " + self.name,
-                total=len(mask_coordinates),
-            )
-        ]
-        end_time_preprocessing = time()
-        if end_time_preprocessing - start_time_preprocessing >= 60:
-            self.logger.info(
-                f"Finished pre-processing slide: {self.name} in \
-                    {round((end_time_preprocessing - start_time_preprocessing) / 60, 2)} minutes."
-            )
-        else:
-            self.logger.info(
-                f"Finished pre-processing slide: {self.name} in \
-                    {round((end_time_preprocessing - start_time_preprocessing), 2)} seconds."
-            )
-
-        start_time_quantification = time()
-        max_workers = os.cpu_count() - 1
-        # k = 4
-        # chunksize = max(1, len(iterable) // (max_workers * k))
-        # Multiprocessing using concurrent.futures, gathering results and adding them to dictionary in linear manner.
-        with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as exe:
-            results = tqdm(
-                exe.map(quantify_tile, iterable),
-                total=len(iterable),
-                desc="Processing slide: " + self.name,
-            )
-            for idx, res in enumerate(results):
-                # if result is not None:
+            ),
+        ) as exe:
+            results = exe.map(quantify_tile_at, mask_coordinates, chunksize=16)
+            for idx, res in enumerate(
+                tqdm(results, total=len(mask_coordinates), desc="Processing slide: " + self.name)
+            ):
                 self.detailed_quantification_results[idx] = res
-        end_time_quantification = time()
+                end_time_quantification = time()
         if end_time_quantification - start_time_quantification >= 60:
             self.logger.info(
                 f"Finished quantifying slide: {self.name} in \
@@ -477,69 +444,59 @@ class Slide(object):
 
     def reconstruct_slide(self, in_path, out_path):
         """
-        Reconstructs a slide into a Whole Slide Image (WSI) based on saved tiles. This is only possible if tiles have
-        been saved during processing. The WSI is then saved as .tif in the specified `out_path`.
+        Reconstructs a slide into a Whole Slide Image (WSI) based on saved tiles.
+        Tiles that were not saved are replaced by grey tiles. The WSI is saved as
+        a pyramidal .tif in `out_path`.
 
         Args:
-            in_path (str): Path to saved tiles
-            out_path (str): Path where to save the reconstructed slide.
-
+            in_path (str): Path to saved tiles (named "{col}_{row}.tif")
+            out_path (str): Directory where the reconstructed slide is saved.
         """
         start_time = time()
-        # Check paths
         if not os.path.isdir(in_path):
             self.logger.error(f"Input path {in_path} does not exist.")
             raise ValueError(f"Input path {in_path} does not exist.")
-        # Check if in_path contains .tif files
-        tif_files = [f for f in os.listdir(in_path) if f.endswith(".tif")]
-        if not tif_files:
+        if not any(f.lower().endswith((".tif", ".tiff")) for f in os.listdir(in_path)):
             self.logger.error(f"No .tif files found in input path {in_path}.")
             raise ValueError(f"No .tif files found in input path {in_path}.")
 
-        # Ensure output directory exists
         os.makedirs(out_path, exist_ok=True)
 
-        # Init variables
-        counter = 0
         cols, rows = self.tiles.level_tiles[self.level_count - 1]
-        row_array = []
 
-        # append tiles for each column and row. Previously not processed tiles are replaced by white tiles.
-        for row in tqdm(range(rows), desc="Reconstructing slide: " + self.name):
-            column_array = []
-            for col in range(cols):
-                tile_name = str(col) + "_" + str(row)
-                file = os.path.join(in_path, tile_name + ".tif")
-                if os.path.exists(file):
-                    img = Image.open(file)
-                    counter += 1
-                else:
-                    img = Image.new("RGB", (1024, 1024), (192, 192, 192))
-
-                column_array.append(img)
-
-            segmented_row = np.concatenate(column_array, axis=1)
-            row_array.append(segmented_row)
-
-        # Create WSI and save as pyramidal TIF in self.reconstruct_dir
-        logging.getLogger("pyvips").setLevel(logging.WARNING)
-        segmented_wsi = np.concatenate(row_array, axis=0)
-        segmented_wsi = VipsImage.new_from_array(
-            segmented_wsi).cast(BandFormat.INT)
-        end_time = time()
-        self.logger.info(
-            f"Finished reconstructing slide: {self.name} in {round((end_time - start_time) / 60, 2)} minutes."
+        # Grey placeholder for tiles that were never processed
+        placeholder = (
+            VipsImage.black(1024, 1024, bands=3)
+            .new_from_image([192, 192, 192])
+            .cast("uchar")
         )
 
-        start_time_save = time()
+        tiles, found = [], 0
+        for row in tqdm(range(rows), desc="Reconstructing slide: " + self.name):
+            for col in range(cols):
+                file = os.path.join(in_path, f"{col}_{row}.tif")
+                if os.path.exists(file):
+                    img = VipsImage.new_from_file(file)
+                    if img.bands == 4:                      # drop alpha
+                        img = img.flatten(background=[255, 255, 255])
+                    elif img.bands == 1:                    # grey -> RGB
+                        img = img.bandjoin([img, img])
+                    img = img.cast("uchar")
+                    found += 1
+                else:
+                    img = placeholder
+                tiles.append(img)
+
+        wsi = VipsImage.arrayjoin(tiles, across=cols).copy(interpretation="srgb")
+
+        # Crop padding at right/bottom back to the real slide size
+        width, height = self.openslide_object.dimensions
+        wsi = wsi.crop(0, 0, min(width, wsi.width), min(height, wsi.height))
+
         out = os.path.join(out_path, self.name + "_reconst.tif")
         self.logger.info(f"Saving reconstructed slide to {out}")
-        segmented_wsi.crop(
-            0,
-            0,
-            self.openslide_object.dimensions[0],
-            self.openslide_object.dimensions[1],
-        ).tiffsave(
+        start_time_save = time()
+        wsi.tiffsave(
             out,
             tile=True,
             compression="jpeg",
@@ -548,9 +505,11 @@ class Slide(object):
             tile_width=256,
             tile_height=256,
         )
-        end_time_save = time()
-        self.logger.debug(
-            f"Saved reconstructed slide to {out} in {round((end_time_save - start_time_save) / 60, 2)} minutes."
+
+        self.logger.info(
+            f"Reconstructed {found}/{rows * cols} tiles for {self.name}; "
+            f"total {round((time() - start_time) / 60, 2)} min "
+            f"(save: {round((time() - start_time_save) / 60, 2)} min)."
         )
 
     def update_slide(self, new_path):

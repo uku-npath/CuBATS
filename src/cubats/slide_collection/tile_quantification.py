@@ -4,9 +4,14 @@ intensities, H-score and the IHC-Profiler score calculation, all based on antige
 tumor-tissue areas.
 """
 
+# Standard Library
+import time
+
 # Third Party
 import cv2
 import numpy as np
+import openslide
+from openslide.deepzoom import DeepZoomGenerator
 from PIL import Image
 from skimage import img_as_ubyte
 from skimage.color import hed2rgb, rgb2gray, rgb2hed
@@ -15,6 +20,8 @@ from skimage.exposure import histogram
 # CuBATS
 from cubats.config import xp
 from cubats.cutils import to_numpy
+
+_state = {}
 
 
 def quantify_tile(iterable):
@@ -375,3 +382,37 @@ def mask_tile(tile, mask):
     masked_tile = np.where(binary_mask_inv_3ch == 0, white_bg, masked_tile)
 
     return Image.fromarray(masked_tile.astype(np.uint8)), tumor_mask
+
+
+def init_worker(slide_path, mask_path, level, dab_tile_dir, save_img, antigen_profile):
+    """Runs once per worker: opens slide (and mask) locally."""
+    osr = openslide.OpenSlide(slide_path)
+    _state["osr"] = osr  # keep reference
+    _state["tiles"] = DeepZoomGenerator(osr, tile_size=1024, overlap=0, limit_bounds=True)
+    _state["mask_tiles"] = None
+    if mask_path is not None:
+        mosr = openslide.OpenSlide(mask_path)
+        _state["mosr"] = mosr
+        _state["mask_tiles"] = DeepZoomGenerator(mosr, tile_size=1024, overlap=0, limit_bounds=True)
+    _state.update(level=level, dir=dab_tile_dir, save_img=save_img, profile=antigen_profile)
+
+
+def quantify_tile_at(xy):
+    t0 = time.perf_counter()  # TODO remove
+    x, y = xy
+    level = _state["level"]
+    tile = _state["tiles"].get_tile(level, (x, y))
+    if _state["mask_tiles"] is not None:
+        tile_data = mask_tile(tile, _state["mask_tiles"].get_tile(level, (x, y)))
+    else:
+        tile_data = (tile, None)
+    t1 = time.perf_counter()
+
+    result = quantify_tile(
+        (x, y, tile_data, _state["dir"], _state["save_img"], _state["profile"])
+    )
+    t2 = time.perf_counter()
+
+    result["_t_read"] = t1 - t0      # tile reading (+ masking in pixel-level mode)
+    result["_t_compute"] = t2 - t1   # quantify_tile: transfers, deconvolution, histograms
+    return result

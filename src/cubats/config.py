@@ -17,7 +17,7 @@ def get_backend_namespace():
     """
     global gpu_enabled
     try:
-        if platform.system() == "Windows":
+        if platform.system() in ("Windows", "Linux"):
             # Third Party
             import cupy as cp  # type: ignore
 
