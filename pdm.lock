@@ -5,7 +5,7 @@
 groups = ["default", "dev", "docs", "testing"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.1"
-content_hash = "sha256:64d5d14b2de53cbcb397877fde09d48f80f70b38a5ea974f9a6e831f810aaead"
+content_hash = "sha256:e2314795b6f6dd9d8e5edba94993ca14f2e9a6a9d4295ed7fcc1e1fa578de860"
 
 [[metadata.targets]]
 requires_python = ">=3.10,<3.13"
@@ -965,16 +965,6 @@ dependencies = [
 files = [
     {file = "flake8-7.3.0-py2.py3-none-any.whl", hash = "sha256:b9696257b9ce8beb888cdbe31cf885c90d31928fe202be0889a7cdafad32f01e"},
     {file = "flake8-7.3.0.tar.gz", hash = "sha256:fe044858146b9fc69b551a4b490d69cf960fcb78ad1edcb84e7fbb1b4a8e3872"},
-]
-
-[[package]]
-name = "flatbuffers"
-version = "25.12.19"
-summary = "The FlatBuffers serialization format for Python"
-groups = ["default"]
-marker = "sys_platform == \"win32\" or sys_platform == \"linux\" and platform_machine == \"x86_64\""
-files = [
-    {file = "flatbuffers-25.12.19-py2.py3-none-any.whl", hash = "sha256:7634f50c427838bb021c2d66a3d1168e9d199b0607e6329399f04846d42e20b4"},
 ]
 
 [[package]]
@@ -2580,27 +2570,6 @@ dependencies = [
 ]
 files = [
     {file = "onnx2torch-1.5.0-py3-none-any.whl", hash = "sha256:691cae8ca902378e940bea6033e75e6449c97cafc2812c0e76fd09b65cf21283"},
-]
-
-[[package]]
-name = "onnxruntime-gpu"
-version = "1.24.3"
-requires_python = ">=3.10"
-summary = "ONNX Runtime is a runtime accelerator for Machine Learning models"
-groups = ["default"]
-marker = "sys_platform == \"win32\" or sys_platform == \"linux\" and platform_machine == \"x86_64\""
-dependencies = [
-    "flatbuffers",
-    "numpy>=1.21.6",
-    "packaging",
-    "protobuf",
-    "sympy",
-]
-files = [
-    {file = "onnxruntime_gpu-1.24.3-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:ac922633819e1cdc81c9b3a28b5e37d788805307bbaa708a01a3d7150e345625"},
-    {file = "onnxruntime_gpu-1.24.3-cp311-cp311-win_amd64.whl", hash = "sha256:0fe6ece3042db149f36f4991cbebd19a690b7ffd82af89450a261b47f4704a37"},
-    {file = "onnxruntime_gpu-1.24.3-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:537bdd6d95006a9200ae81f2e73ba9e621e723fdf0deb5901e2e62fb2cccf876"},
-    {file = "onnxruntime_gpu-1.24.3-cp312-cp312-win_amd64.whl", hash = "sha256:d72065b3ab5fdaef74d8b6b8f39b7ce20d89731610e3e63cb40e997d3dce177e"},
 ]
 
 [[package]]
