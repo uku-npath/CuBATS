@@ -6,6 +6,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 # Third Party
+import numpy as np
 import torch
 import torch.nn as nn
 from PIL import Image
@@ -149,7 +150,7 @@ class TestRunTumorSegmentation(BaseSegmentationTest):
 
     @patch("onnx.checker.check_model")
     @patch("onnx.load")
-    @patch("onnx2torch.convert", side_effect=RuntimeError("Error converting model"))
+    @patch("cubats.slide_collection.segmentation.convert", side_effect=RuntimeError("Error converting model"))
     def test_model_conversion_error(self, mock_convert, mock_load, mock_check_model):
         mock_model = MagicMock()
         mock_load.return_value = mock_model
@@ -222,8 +223,8 @@ class TestSegmentFileProcessing(BaseSegmentationTest):
 
         class DummyModel(nn.Module):
             def forward(self, x):
-                _, _, h, w = x.shape
-                return torch.full((1, 1, h, w), 10.0)
+                n, _, h, w = x.shape
+                return torch.full((n, 1, h, w), 10.0)
 
         model = DummyModel()
 
@@ -258,35 +259,52 @@ class TestSegmentFileProcessing(BaseSegmentationTest):
                 self.assertTrue(mask_out.endswith(".tif"))
 
 
-class TestSegmentTile(BaseSegmentationTest):
-    def test_segment_tile_inversion(self):
+class TestRunBatch(BaseSegmentationTest):
+    def _run(self, model, needs_resize, inversion, tile_size=(8, 8)):
+        output_tiles = [None]
+        pbar = MagicMock()
+        seg._run_batch(
+            batch_coords=[(0, 0)],
+            batch_tensors=[torch.zeros((3, 8, 8), dtype=torch.float32)],
+            model=model,
+            device=torch.device("cpu"),
+            use_amp=False,
+            needs_resize=needs_resize,
+            tile_size=tile_size,
+            inversion=inversion,
+            output_tiles=output_tiles,
+            n_cols=1,
+            pbar=pbar,
+        )
+        return output_tiles, pbar
+
+    def test_run_batch_inversion(self):
         class NegModel(nn.Module):
             def forward(self, x):
-                _, _, h, w = x.shape
-                return torch.full((1, 1, h, w), -10.0)
+                n, _, h, w = x.shape
+                return torch.full((n, 1, h, w), -10.0)
 
-        model = NegModel()
-        tile = torch.zeros((1, 3, 8, 8), dtype=torch.float32)
-        img = seg._segment_tile(
-            tile, model, resizing=False, inversion=True, original_size=(8, 8))
-        self.assertIsInstance(img, Image.Image)
-        self.assertEqual(img.mode, "L")
-        self.assertEqual(img.size, (8, 8))
-        self.assertEqual(img.getpixel((0, 0)), 255)
+        tiles, pbar = self._run(NegModel(), needs_resize=False, inversion=True)
+        self.assertEqual(tiles[0].shape, (8, 8))
+        self.assertEqual(tiles[0].dtype, np.uint8)
+        self.assertTrue((tiles[0] == 255).all())
+        pbar.update.assert_called_once_with(1)
 
-    def test_segment_tile_resizing(self):
+    def test_run_batch_resizing(self):
         class SmallModel(nn.Module):
             def forward(self, x):
-                return torch.full((1, 1, 4, 4), 10.0)
+                return torch.full((x.shape[0], 1, 4, 4), 10.0)
 
-        model = SmallModel()
-        tile = torch.zeros((1, 3, 8, 8), dtype=torch.float32)
-        img = seg._segment_tile(
-            tile, model, resizing=True, inversion=False, original_size=(8, 8))
-        self.assertIsInstance(img, Image.Image)
-        self.assertEqual(img.mode, "L")
-        self.assertEqual(img.size, (8, 8))
-        self.assertEqual(img.getpixel((0, 0)), 255)
+        tiles, _ = self._run(SmallModel(), needs_resize=True, inversion=False)
+        self.assertEqual(tiles[0].shape, (8, 8))
+        self.assertTrue((tiles[0] == 255).all())
+
+    def test_run_batch_empty_is_noop(self):
+        output_tiles, pbar = [None], MagicMock()
+        seg._run_batch([], [], MagicMock(), torch.device("cpu"), False,
+                       False, (8, 8), False, output_tiles, 1, pbar)
+        self.assertIsNone(output_tiles[0])
+        pbar.update.assert_not_called()
 
 
 class TestSaveSegmentedWSI(BaseSegmentationTest):
