@@ -26,7 +26,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Cache Python dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: .venv
           key: venv-ubuntu-3.11-${{ hashFiles('pdm.lock') }}
@@ -64,7 +64,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Cache Python dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: .venv
           key: venv-${{ matrix.os }}-${{ matrix.python-version }}-${{ hashFiles('pdm.lock') }}
@@ -96,41 +96,3 @@ jobs:
         run: |
           pdm test -- -q --tb=short
         continue-on-error: false
-
-  coverage:
-    needs: testing-main
-    name: Coverage (Main Branch Only)
-    runs-on: ubuntu-latest
-    if: github.ref_name == 'main'
-    steps:
-    - uses: actions/checkout@v4
-    - name: Free disk space
-      run: |
-        sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android
-        sudo apt-get clean
-        sudo rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
-        sudo rm -rf /home/runner/.cache/* /tmp/*
-        df -h
-    - name: Set up PDM
-      uses: pdm-project/setup-pdm@v4
-      with:
-        python-version: '3.12'
-    - name: Install system dependencies (Ubuntu)
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libvips42
-    - name: Install dependencies
-      run: |
-        pdm sync -d
-    - name: Generate coverage
-      run: |
-        pdm cov_report
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        files: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: true
-        verbose: true

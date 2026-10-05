@@ -54,29 +54,3 @@ jobs:
     - name: Run Tests
       run: |
         pdm test
-
-  coverage:
-    needs: testing
-    name: Coverage
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up PDM
-      uses: pdm-project/setup-pdm@v4
-      with:
-        python-version: '3.12'
-    - name: Install dependencies
-      run: |
-        pdm sync -d
-    - name: Generate coverage
-      run: |
-        pdm cov_report
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        files: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: true
-        verbose: true
