@@ -6,7 +6,7 @@ import shutil
 import tempfile
 import unittest
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 # Third Party
 import pandas as pd
@@ -15,6 +15,8 @@ from PIL import Image
 # CuBATS
 from cubats.slide_collection.slide import Slide
 from cubats.slide_collection.slide_collection import SlideCollection
+
+PATCH = "cubats.slide_collection.slide_collection.stitch_tiles"
 
 
 class DummySlide:
@@ -731,3 +733,60 @@ class TestQuickQuantificationAndColocalization(unittest.TestCase):
             self.sc.save_antigen_combinations(
                 result_type="invalid", masking_mode="tile-level"
             )
+
+
+def _fake_slide(name, grid=(3, 2), size=(3000, 2000)):
+    tiles = SimpleNamespace(level_tiles=[(1, 1), grid], level_dimensions=[(1, 1), size])
+    return SimpleNamespace(name=name, tiles=tiles)
+
+
+def _collection(tmp, slides):
+    c = SlideCollection.__new__(SlideCollection)   # skip __init__
+    c.slides = slides
+    c.logger = MagicMock()
+    c.dest_dir = tmp
+    c.colocalization_dir = os.path.join(tmp, "colocalization")
+    c.reconstruct_dir = os.path.join(tmp, "reconstructed_slides")
+    return c
+
+
+class TestReconstructColocalization(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        try:
+            self.tmp.cleanup()
+        except Exception:
+            pass
+
+    def test_reconstruct_colocalization_dual_by_name(self):
+        c = _collection(self.tmp.name, [_fake_slide("CD3"), _fake_slide("CD8")])
+        with patch(PATCH, return_value=5) as m:
+            found = c.reconstruct_colocalization("CD3", "CD8")
+        self.assertEqual(found, 5)
+        args, kwargs = m.call_args
+        self.assertEqual(args[0], os.path.join(c.colocalization_dir, "CD3_and_CD8"))
+        self.assertEqual(args[1], os.path.join(c.reconstruct_dir, "CD3_and_CD8_reconst.tif"))
+        self.assertEqual(args[2:4], ((3, 2), (3000, 2000)))
+        self.assertTrue(kwargs["thumbnail_path"].endswith("CD3_and_CD8_reconst_thumbnail.png"))
+
+    def test_reconstruct_colocalization_triplet_with_objects_keeps_order(self):
+        s = [_fake_slide(n) for n in ("A", "B", "C")]
+        c = _collection(self.tmp.name, s)
+        with patch(PATCH, return_value=1) as m:
+            c.reconstruct_colocalization(s[2], s[0], s[1], thumbnail=False)
+        self.assertTrue(m.call_args.args[0].endswith("C_and_A_and_B"))  # folder follows call order
+        self.assertIsNone(m.call_args.kwargs["thumbnail_path"])
+
+    def test_reconstruct_colocalization_validation(self):
+        s = [_fake_slide("A"), _fake_slide("B"), _fake_slide("C", size=(2999, 2000))]
+        c = _collection(self.tmp.name, s)
+        with patch(PATCH) as m:
+            with self.assertRaises(ValueError):
+                c.reconstruct_colocalization("A")              # needs 2 or 3 slides
+            with self.assertRaises(ValueError):
+                c.reconstruct_colocalization("A", "nope")      # unknown name
+            with self.assertRaises(ValueError):
+                c.reconstruct_colocalization("A", "B", "C")    # grid mismatch
+            m.assert_not_called()                              # nothing stitched on bad input

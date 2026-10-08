@@ -4,12 +4,14 @@ import pickle
 import shutil
 import tempfile
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 # Third Party
+import pytest
 from PIL import Image as PILImage
 
 # CuBATS
+from cubats.reconstruction import DEFAULT_TILE_SIZE, get_deepzoom_grid
 from cubats.slide_collection.slide import Slide
 
 
@@ -143,27 +145,47 @@ class TestSlideReconstruct(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.slide.reconstruct_slide(empty_dir, self.out)
 
-    def test_reconstruct_slide_success_calls_vips_and_saves(self):
-        # One real tile on disk (0_0.tif); the rest are missing to exercise the placeholder path
+    def test_reconstruct_slide_passes_grid_paths_and_thumbnail(self):
+        with patch("cubats.slide_collection.slide.stitch_tiles", return_value=1) as m:
+            self.slide.reconstruct_slide("in_dir", "out_dir", thumbnail=True)
+
+        args, kwargs = m.call_args
+        grid, size = get_deepzoom_grid(self.slide)
+        name = self.slide.name
+        self.assertEqual(args[0], "in_dir")
+        self.assertEqual(args[1], os.path.join("out_dir", f"{name}_DAB.tif"))
+        self.assertEqual(args[2:4], (grid, size))
+        self.assertEqual(kwargs["tile_size"], DEFAULT_TILE_SIZE)
+        self.assertEqual(
+            kwargs["thumbnail_path"], os.path.join("out_dir", f"{name}_DAB_thumbnail.png"))
+
+    def test_reconstruct_slide_defaults_and_no_thumbnail(self):
+        self.slide.dab_tile_dir = "dab_dir"
+        with patch("cubats.slide_collection.slide.stitch_tiles", return_value=1) as m:
+            self.slide.reconstruct_slide(out_path="out_dir")
+        self.assertEqual(m.call_args.args[0], "dab_dir")          # in_path defaults to dab_tile_dir
+        self.assertIsNone(m.call_args.kwargs["thumbnail_path"])   # thumbnail is off by default
+
+    def test_reconstruct_slide_requires_paths(self):
+        self.slide.dab_tile_dir = None
+        with self.assertRaises(ValueError):
+            self.slide.reconstruct_slide(out_path="out_dir")      # no in_path and no dab_tile_dir
+        with self.assertRaises(ValueError):
+            self.slide.reconstruct_slide("in_dir")                # no out_path
+
+    def test_reconstruct_slide_output_matches_deepzoom_size(self):
+        pyvips = pytest.importorskip("pyvips")
+        w, h = self.slide.tiles.level_dimensions[-1]
         tiles_dir = os.path.join(self.tmp.name, "tiles")
         os.makedirs(tiles_dir, exist_ok=True)
-        PILImage.new("RGB", (8, 8), (10, 20, 30)).save(os.path.join(tiles_dir, "0_0.tif"))
+        PILImage.new("RGB", (min(1024, w), min(1024, h)), (10, 20, 30)).save(
+            os.path.join(tiles_dir, "0_0.tif"))
 
-        with patch("cubats.slide_collection.slide.VipsImage") as mock_vips_cls:
-            # new pipeline: arrayjoin(...).copy(...) -> wsi -> wsi.crop(...) -> cropped.tiffsave(...)
-            wsi = MagicMock(width=16, height=16)   # real ints: the code does min(width, wsi.width)
-            cropped = MagicMock()
-            wsi.crop.return_value = cropped
-            mock_vips_cls.arrayjoin.return_value.copy.return_value = wsi
+        out_dir = os.path.join(self.out, "reconst_out")
+        self.slide.reconstruct_slide(tiles_dir, out_dir)
 
-            out_dir = os.path.join(self.out, "reconst_out")
-            self.slide.reconstruct_slide(tiles_dir, out_dir)
-
-            mock_vips_cls.new_from_file.assert_called_once()   # only 0_0.tif exists
-            mock_vips_cls.arrayjoin.assert_called_once()
-            wsi.crop.assert_called_once()
-            cropped.tiffsave.assert_called_once()
-            self.assertTrue(os.path.isdir(out_dir))
+        img = pyvips.Image.new_from_file(os.path.join(out_dir, f"{self.slide.name}_DAB.tif"))
+        self.assertEqual((img.width, img.height), (w, h))
 
 
 if __name__ == "__main__":

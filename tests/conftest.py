@@ -1,7 +1,10 @@
-"""Shared pytest fixtures and setup for the CuBATS test suite."""
+# Standard Library
+import os
+
 # Third Party
 import openslide.lowlevel as _ll
 
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
 _original_read_icc_profile = _ll.read_icc_profile
 
 

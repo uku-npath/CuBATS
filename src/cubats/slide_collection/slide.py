@@ -9,12 +9,13 @@ from time import time
 # Third Party
 import openslide
 from openslide.deepzoom import DeepZoomGenerator
-from pyvips import Image as VipsImage
 from tqdm import tqdm
 
 # CuBATS
 import cubats.logging_config as log_config
 from cubats.config import xp
+from cubats.reconstruction import (DEFAULT_TILE_SIZE, get_deepzoom_grid,
+                                   stitch_tiles)
 from cubats.slide_collection.tile_quantification import (init_worker,
                                                          quantify_tile_at)
 
@@ -442,75 +443,22 @@ class Slide(object):
                 {round((end_time_summarize - start_time_summarize) / 60, 2)} minutes."
         )
 
-    def reconstruct_slide(self, in_path, out_path):
-        """
-        Reconstructs a slide into a Whole Slide Image (WSI) based on saved tiles.
-        Tiles that were not saved are replaced by grey tiles. The WSI is saved as
-        a pyramidal .tif in `out_path`.
-
-        Args:
-            in_path (str): Path to saved tiles (named "{col}_{row}.tif")
-            out_path (str): Directory where the reconstructed slide is saved.
-        """
-        start_time = time()
-        if not os.path.isdir(in_path):
-            self.logger.error(f"Input path {in_path} does not exist.")
-            raise ValueError(f"Input path {in_path} does not exist.")
-        if not any(f.lower().endswith((".tif", ".tiff")) for f in os.listdir(in_path)):
-            self.logger.error(f"No .tif files found in input path {in_path}.")
-            raise ValueError(f"No .tif files found in input path {in_path}.")
-
-        os.makedirs(out_path, exist_ok=True)
-
-        cols, rows = self.tiles.level_tiles[self.level_count - 1]
-
-        # Grey placeholder for tiles that were never processed
-        placeholder = (
-            VipsImage.black(1024, 1024, bands=3)
-            .new_from_image([192, 192, 192])
-            .cast("uchar")
-        )
-
-        tiles, found = [], 0
-        for row in tqdm(range(rows), desc="Reconstructing slide: " + self.name):
-            for col in range(cols):
-                file = os.path.join(in_path, f"{col}_{row}.tif")
-                if os.path.exists(file):
-                    img = VipsImage.new_from_file(file)
-                    if img.bands == 4:                      # drop alpha
-                        img = img.flatten(background=[255, 255, 255])
-                    elif img.bands == 1:                    # grey -> RGB
-                        img = img.bandjoin([img, img])
-                    img = img.cast("uchar")
-                    found += 1
-                else:
-                    img = placeholder
-                tiles.append(img)
-
-        wsi = VipsImage.arrayjoin(tiles, across=cols).copy(interpretation="srgb")
-
-        # Crop padding at right/bottom back to the real slide size
-        width, height = self.openslide_object.dimensions
-        wsi = wsi.crop(0, 0, min(width, wsi.width), min(height, wsi.height))
-
-        out = os.path.join(out_path, self.name + "_reconst.tif")
-        self.logger.info(f"Saving reconstructed slide to {out}")
-        start_time_save = time()
-        wsi.tiffsave(
-            out,
-            tile=True,
-            compression="jpeg",
-            bigtiff=True,
-            pyramid=True,
-            tile_width=256,
-            tile_height=256,
-        )
-
-        self.logger.info(
-            f"Reconstructed {found}/{rows * cols} tiles for {self.name}; "
-            f"total {round((time() - start_time) / 60, 2)} min "
-            f"(save: {round((time() - start_time_save) / 60, 2)} min)."
-        )
+    def reconstruct_slide(self, in_path=None, out_path=None, thumbnail=False):
+        """Reconstruct DAB-tiles into pyramidal TIFF in `out_path`.
+        `in_path` defaults to self.dab_tile_dir."""
+        in_path = in_path or self.dab_tile_dir
+        if in_path is None:
+            raise ValueError(f"No tile directory for {self.name}; pass in_path "
+                            "or quantify with save_img=True.")
+        if out_path is None:
+            raise ValueError("out_path is required.")
+        grid, size = get_deepzoom_grid(self)
+        out_file = os.path.join(out_path, self.name + "_DAB.tif")
+        return stitch_tiles(
+            in_path, out_file, grid, size, tile_size=DEFAULT_TILE_SIZE,
+            logger=self.logger, desc="Reconstructing slide: " + self.name,
+            thumbnail_path=(os.path.join(out_path, self.name + "_DAB_thumbnail.png")
+                            if thumbnail else None))
 
     def update_slide(self, new_path):
         """

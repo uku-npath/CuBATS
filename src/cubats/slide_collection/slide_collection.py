@@ -17,6 +17,7 @@ from tqdm import tqdm
 import cubats.cutils as cutils
 import cubats.logging_config as log_config
 from cubats.config import get_backend_info, xp
+from cubats.reconstruction import assert_same_grid, stitch_tiles
 from cubats.slide_collection.registration import (
     register_slides, register_slides_high_resolution,
     register_slides_with_reference)
@@ -419,6 +420,10 @@ class SlideCollection(object):
         # Pickle dir
         self.pickle_dir = os.path.join(self.data_dir, PICKLE_DIR)
         os.makedirs(self.pickle_dir, exist_ok=True)
+
+        self.tiles_dir = os.path.join(self.dest_dir, TILES_DIR)
+        self.colocalization_dir = os.path.join(self.dest_dir, COLOCALIZATION)
+        self.reconstruct_dir = os.path.join(self.dest_dir, RECONSTRUCT_DIR)
 
         self.logger.debug("Data and Pickle directories created")
 
@@ -1669,3 +1674,25 @@ class SlideCollection(object):
         out = os.path.join(self.pickle_dir, pickle_filename)
         with open(out, "wb") as f:
             pickle.dump(summary_df, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def reconstruct_colocalization(self, *slides, thumbnail=True):
+        """Reconstruct dual/triplet colocalization tiles of 2 or 3 slides into a
+        pyramidal TIFF in `reconstruct_dir`. Slides may be Slide objects or names.
+        Requires colocaltion analysis to have run with save_img=True."""
+        if len(slides) not in (2, 3):
+            raise ValueError("Pass 2 or 3 slides.")
+        by_name = {s.name: s for s in self.slides}
+        if any(isinstance(s, str) and s not in by_name for s in slides):
+            raise ValueError(f"Unknown slide name in {slides}.")
+        slides = [by_name[s] if isinstance(s, str) else s for s in slides]
+
+        grid, size = assert_same_grid(slides)
+        name = "_and_".join(s.name for s in slides)
+        out_file = os.path.join(self.reconstruct_dir, f"{name}_reconst.tif")
+        return stitch_tiles(
+            os.path.join(self.colocalization_dir, name), out_file, grid, size,
+            tile_size=DEFAULT_TILE_SIZE, logger=self.logger,
+            desc=f"Reconstructing {name}",
+            thumbnail_path=(os.path.join(self.reconstruct_dir, f"{name}_reconst_thumbnail.png")
+                            if thumbnail else None),
+        )
